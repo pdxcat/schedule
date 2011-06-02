@@ -261,9 +261,7 @@ if (!defined $ARGV[0]) {
 					# specified CAT using check_shift()
 					if (check_shift(
 						$args{'dog_id'},
-						$current_date{'yyyy-mm-dd'},
-						$current_hour,
-						sprintf("%02d",$current_hour + 1),
+						$shift_id,
 						$args{'desk_id'})) {
 						# If one does, mention this and step to the next hour
 						print "Active shift assignment already exists for $current_date{'yyyy-mm-dd'} starting at $current_hour, skipping.\n";
@@ -272,9 +270,7 @@ if (!defined $ARGV[0]) {
 						# and create a new shift assignment
 						new_assignment(
 							$args{'dog_id'},
-							$current_date{'yyyy-mm-dd'},
-							$current_hour,
-							$args{'end_time'}{'hh'},
+							$shift_id,
 							$args{'desk_id'});
 					};
 				} else {
@@ -309,6 +305,8 @@ sub get_shift_id {
 	$gsi_args{'start'} = sprintf("%02d:00:00",$gsi_args{'start'});
 	$gsi_args{'end'} = sprintf("%02d:00:00",$gsi_args{'end'});
 	
+	# Query to match *the* (there should only be one!) shift entry for the
+	# given date and start and end times.
 	my $sth_gsi = $dbh->prepare('
 		SELECT ns_shift_id
 		FROM ns_shift
@@ -331,12 +329,21 @@ sub get_shift_id {
 		};
 	};
 
+	# If we got more than one matching shift entry something is really
+	# wrong in the database and needs to be fixed before it is messed with
+	# any further.
 	if (@shift_ids > 1) {
 		print "Found more than one shift for $gsi_args{'date'} at $gsi_args{'start'}: \n";
 		for (my $i, @shift_ids) {
 			print "$i\n";
 		};
 		exit; 
+	# No entries probably just means that shifts for the term that
+	# assignment is being attempted for have not been generated. Maybe
+	# should change this to exit the program since its likely there won't
+	# be any shift entries for a given range if the first one checked for
+	# doesn't exist, barring any terrible misuse of the system. Gonna leave
+	# it be for now.
 	} elsif (@shift_ids == 0) {
 		print "No shifts found for $gsi_args{'date'} at $gsi_args{'start'}. \n";
 		return 0;
@@ -357,21 +364,21 @@ sub new_assignment {
 	
 };
 
-# Determine if an "active" shift assignment exists for a CAT at a given date and time
+# Determine if an "active" shift assignment for a given shift exists for a Cat
 # "Active" shift assignments are those for which the is not a corresponding entry in ns_shift_dropped
-# Args: 'dog_id', date, start time, end time, 'desk_id'
+# Args: 'dog_id', shift_id, 'desk_id'
+
 sub check_shift { 
 
-	if (@_ != 5) {
+	if (@_ != 3) {
 		print "check_shift() was passed an invalid number of arguments! (" . @_ . ").\n";
 		exit;
 	};
 	my %cs_args; 
-	@cs_args{'dog_id','date','start_time','end_time','desk_id'} = @_;
-	$cs_args{'start'} = sprintf("%02d:00:00",$cs_args{'start_time'});
-	$cs_args{'end'} = sprintf("%02d:00:00",$cs_args{'end_time'});
+	@cs_args{'dog_id','shift_id','desk_id'} = @_;
 
-	
+	select from shift assignments
+	where shift id matches 
 };
 
 # Iterates through each entry of a hash to see if the given scalar exists as a
