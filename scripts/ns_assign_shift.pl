@@ -137,7 +137,6 @@ if (!defined $ARGV[0]) {
 		@result{'dd','hh','mm','ss'} 
 			= Date::Calc::Delta_DHMS(2011,5,23,@{$args{'start_time'}}{'hh','mm'},0,
 			2011,5,23,$hours{'weekday_start'},0,0);
-		print $result{'hh'} . "\n";
 		if ($result{'hh'} > 0) {
 			print "Specified start time is too early.\n";
 			exit;
@@ -145,7 +144,6 @@ if (!defined $ARGV[0]) {
 		@result{'dd','hh','mm','ss'} 
 			= Date::Calc::Delta_DHMS(2011,5,23,@{$args{'start_time'}}{'hh','mm'},0,
 			2011,5,23,$hours{'weekday_end'},0,0);
-		print $result{'hh'} . "\n";
 		if ($result{'hh'} < 1 ) {
 			print "Specified start time is too late.\n";
 			exit;
@@ -153,7 +151,6 @@ if (!defined $ARGV[0]) {
 		@result{'dd','hh','mm','ss'} 
 			= Date::Calc::Delta_DHMS(2011,5,23,@{$args{'end_time'}}{'hh','mm'},0,
 			2011,5,23,$hours{'weekday_end'},0,0);
-		print $result{'hh'} . "\n";
 		if ($result{'hh'} < 0) {
 			print "Specified end time is too late!\n";
 			exit;
@@ -334,10 +331,11 @@ sub get_shift_id {
 	# any further.
 	if (@shift_ids > 1) {
 		print "Found more than one shift for $gsi_args{'date'} at $gsi_args{'start'}: \n";
-		for (my $i, @shift_ids) {
-			print "$i\n";
+		foreach my $id (@shift_ids) {
+			print "$id\n";
 		};
 		exit; 
+
 	# No entries probably just means that shifts for the term that
 	# assignment is being attempted for have not been generated. Maybe
 	# should change this to exit the program since its likely there won't
@@ -355,13 +353,25 @@ sub get_shift_id {
 # Create new assignment entry
 # Args: 'dog_id', date, start time, end time, 'desk_id'
 sub new_assignment {
-	if (@_ != 5) {
+	if (@_ != 3) {
 		print "new_assignment() was passed an invalid number of arguments! (" . @_ . ").\n";
 		exit;
 	};
 	my %na_args; 
-	@na_args{'dog_id','date','start_time','end_time','desk_id'} = @_;
+	@na_args{'dog_id','shift_id','desk_id'} = @_;
 	
+	my $sth_add_assignment = $dbh->prepare('
+		INSERT INTO `ns_shift_assigned` (ns_cat_id,ns_shift_id,ns_desk_id,ns_sa_assignedtime)
+		VALUES (?,?,?,?)
+		') or die "Couldn't prepare statement: " . $dbh->errstr;
+	$sth_add_assignment->bind_param(1,$na_args{'dog_id'});
+	$sth_add_assignment->bind_param(2,$na_args{'shift_id'});
+	$sth_add_assignment->bind_param(3,$na_args{'desk_id'});
+	my $current_timestamp = strftime "%Y-%m-%d %H:%M:%S", localtime;
+	print $current_timestamp . "\n";
+	$sth_add_assignment->bind_param(4,$current_timestamp);
+	$sth_add_assignment->execute;
+	print "Assignment successful for DOG $na_args{'dog_id'}, shift $na_args{'shift_id'}.\n";
 };
 
 # Determine if an "active" shift assignment for a given shift exists for a Cat
@@ -377,8 +387,55 @@ sub check_shift {
 	my %cs_args; 
 	@cs_args{'dog_id','shift_id','desk_id'} = @_;
 
-	select from shift assignments
-	where shift id matches 
+	# Get entries from ns_shift_assigned which match the criteria for
+	# active assignment entries for the given Cat, desk, and shift.
+	my $sth_cs = $dbh->prepare('
+	SELECT sa.ns_sa_id
+	FROM ns_shift_assigned as sa
+	WHERE sa.ns_shift_id = ?
+	AND sa.ns_cat_id = ?
+	AND sa.ns_desk_id = ?
+	AND NOT EXISTS 
+		(SELECT * 
+		FROM ns_shift_dropped as sd 
+		WHERE sd.ns_sa_id = sa.ns_sa_id)')
+	or die "Couldn't prepare statement: " . $dbh->errstr;
+	$sth_cs->bind_param(1,$cs_args{'shift_id'});
+	$sth_cs->bind_param(2,$cs_args{'dog_id'});
+	$sth_cs->bind_param(3,$cs_args{'desk_id'});
+	$sth_cs->execute;
+	
+	# Dump active assignment IDs into an array.
+	my @assignment_ids;
+	while (my @cs_result = $sth_cs->fetchrow_array()) {
+		if (@cs_result == 1) {
+			push(@assignment_ids,$cs_result[0]);
+		} elsif (@cs_result > 1) {
+			print "Got too many columns from database query in check_shift()\n";
+			exit;
+		};
+	};
+	
+	# If we got more than one match something is really off in the DB and
+	# needs to be checked out before anything else happens.
+	if (@assignment_ids > 1) {
+		print "Found more than one active assignment for shift ID: $cs_args{'shift_id'}!\nAssignment IDs are: \n";
+		foreach my $id (@assignment_ids) {
+			print "$id\n";
+		};
+		exit; 
+
+	# If we found an active assignment return its id.
+	} elsif (@assignment_ids == 1) {
+		print "Found active assignment for shift ID: $cs_args{'shift_id'}. \n";
+		print "Assignment ID: " . $assignment_ids[0] . "\n";
+		return $assignment_ids[0];
+
+	# No active assignments means we are clear to create a new assignment entry.
+	} elsif (@assignment_ids == 0) {
+		print "No active assignment found for shift ID: $cs_args{'shift_id'}. \n";
+		return 0;
+	};
 };
 
 # Iterates through each entry of a hash to see if the given scalar exists as a
