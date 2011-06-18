@@ -23,7 +23,7 @@ my $invalid_args_message = "Invalid argument. Use one of the following:
 -d name yyyy                  		Delete an entry from the database\n";
 
 if (!defined $ARGV[0]) {
-	print "No arguments given!\n";
+	print $invalid_args_message; 
 # Option for listing all term entries
 } elsif ($ARGV[0] eq "-l") {
 	term_list();
