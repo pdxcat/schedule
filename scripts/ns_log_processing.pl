@@ -34,7 +34,7 @@ if(@ARGV == 3){
 };
 
 #Get anduril logs
-foreach (`ssh -q schedule\@anduril \'last tty console| grep \"$date\"\'`){
+foreach (`ssh -q schedule\@anduril.cat.pdx.edu \'last tty console| grep \"$date\"\'`){
   /^(.+?)\s+.+?\s+.+?\s+.+?\s+.+?\s+.+?\s+(.+?)\s+.+?\s+(.+?)\s+(.+)/;
   if($3 eq "logged"){
     push @strays, "$1 $2 $3 anduril";
@@ -44,7 +44,7 @@ foreach (`ssh -q schedule\@anduril \'last tty console| grep \"$date\"\'`){
 };
 
 #Add aragog logs
-foreach (`ssh -q schedule\@aragog \'last 1 2 3 4 5 6 7 8 9 10 | grep \"$date\" | grep -v wtmp\'`){
+foreach (`ssh -q schedule\@aragog.cat.pdx.edu \'last 1 2 3 4 5 6 7 8 9 10 | grep \"$date\" | grep -v wtmp\'`){
   /^(.+?)\s+.+?\s+.+?\s+.+?\s+.+?\s+.+?\s+(.+?)\s+.+?\s+(.+?)\s+(.+)\s/;
   if($3 eq "logged"){
     push @strays, "$1 $2 $3 aragog";
@@ -56,7 +56,7 @@ foreach (`ssh -q schedule\@aragog \'last 1 2 3 4 5 6 7 8 9 10 | grep \"$date\" |
 #Add windows logs
 foreach("hapi","mut","kupo"){
   my @temp2=();
-  foreach(`ssh schedule\@anduril \'grep "$windate" /u/schedule/logs/windows/*|grep -i $_\'`){
+  foreach(`ssh schedule\@anduril.cat.pdx.edu \'grep "$windate" /u/schedule/logs/windows/*|grep -i $_\'`){
     /^(?:.+:)(\w+),(\w+).+?(?:\w{4})(?:\w{2})(?:\w{2})(\w{2})(\w{2}),/;
     push @temp2, "$1 $3:$4 $2";
   };
