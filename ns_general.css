@@ -1,0 +1,39 @@
+body {
+	margin: 0px 0px 0px 0px;
+	background-color: #000000;
+	color: #FFFFFF;
+}
+
+th {
+	font-family: Arial, sans-serif;
+	font-size: 14px;
+	padding: 5px;
+	text-align: center;
+}
+
+td {
+	font-family: Arial, sans-serif;
+	font-size: 12px;
+	padding: 3px;
+}
+
+.cell_label {
+	text-align: left;
+	vertical-align: top;
+	font-size: 13px;
+	padding: 1px;
+}
+
+.shift_dh {
+	color: #0099ff;
+}
+
+.shift_kn {
+	color: #009933;
+}
+
+table {
+	width: auto;
+	margin-left: auto;
+	margin-right: auto;
+}
