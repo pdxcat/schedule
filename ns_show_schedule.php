@@ -107,7 +107,7 @@ function generate_calendar_table( $gct_username ) {
 		calendar.
 		*/
 		
-		if (date_format($first_of_month, 'N') == $cell) {
+		if ((date_format($first_of_month, 'w') + 1) == $cell) {
 			
 			for($current_date = $first_of_month;
 			date_diff(date_format($current_date,'Y-m-d'),date_format($last_of_month,'Y-m-d')) > 0;
