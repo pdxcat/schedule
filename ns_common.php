@@ -12,6 +12,16 @@ function start_db() {
 };
 
 
+function check_session() {
+	if (!isset($_SESSION['id'])) {
+		session_start();
+		$_SESSION['username'] = $_SERVER[PHP_AUTH_USER];
+	} else {
+		
+	};
+};
+
+
 function get_shifts( $gs_id ) {
         /* 
 	Returns an array of shifts for the cat in question with the format:
@@ -25,9 +35,8 @@ function get_shifts( $gs_id ) {
 
         We only want to fetch shifts schedule on or after today's date, so
         we need to know what today is.
-        $today = date("Y-m-d");
 	*/
-        $today = "2010-01-01";
+        $today = date("Y-m-d");
 
         /* 
 	Set up and run query for getting shift entries.
@@ -35,16 +44,20 @@ function get_shifts( $gs_id ) {
 	Constraints are the date of the shift being after today's date, and
 	the ID being assigned to matching the ID passed to this function.
 
+	Additional constraint to make sure we are not getting shifts that have
+	been dropped has been added (2011-7-29).
+
 	Resolves the desk id in the shift assignment to the short name for the
 	desk from the desks table.
 	*/
         $db_query = "
                 SELECT a.ns_sa_id, s.ns_shift_date, d.ns_desk_shortname, s.ns_shift_start_time, s.ns_shift_end_time
-                FROM ns_shift_assigned as a, ns_shift as s, ns_desk as d
+                FROM ns_shift_assigned as a, ns_shift as s, ns_desk as d, ns_shift_dropped as dr
                 WHERE ns_shift_date >= '$today'
                 AND a.ns_cat_id = '$gs_id'
                 AND a.ns_shift_id = s.ns_shift_id
                 AND a.ns_desk_id = d.ns_desk_id
+		AND dr.ns_sa_id != a.ns_sa_id
                 ORDER BY ns_shift_date, ns_shift_start_time";
 
         $db_result = mysql_query($db_query);
@@ -58,6 +71,63 @@ function get_shifts( $gs_id ) {
         };
 
         return $shifts;
+};
+
+
+function get_shifts_from_sa_ids( $sa_ids ) {
+	/*
+	Returns an array of shifts associated with assignments by id in the
+	format:
+	
+	$return_array[
+	[ns_sa_id => x, 
+	ns_shift_date => x, 
+	ns_desk_shortname => x,
+	ns_shift_start_time => x, 
+	ns_shift_end_time => x], 
+	...]
+	*/	
+
+	// Build list of shift IDs
+	$sa_id_list = "'";	
+	$sa_id_list .= implode("','",$sa_ids);
+	$sa_id_list .= "'";
+	
+	/*
+	Set up and run query for getting shift entries.
+
+	Get only shifts which have been assigned with an assignment matching 
+	one of the IDs passed to the function.
+
+	Additional constraint to make sure we are not getting shifts that have
+	been dropped has been added (2011-7-29).
+
+	Resolves the desk id in the shift assignment to the short name for the
+	desk from the desks table.
+	*/
+
+        $db_query = "
+                SELECT a.ns_sa_id, s.ns_shift_date, d.ns_desk_shortname, s.ns_shift_start_time, s.ns_shift_end_time
+                FROM ns_shift_assigned as a, ns_shift as s, ns_desk as d, ns_shift_dropped as dr
+                WHERE ns_shift_date >= '$today'
+                AND a.ns_sa_id IN ($sa_id_list)
+                AND a.ns_shift_id = s.ns_shift_id
+                AND a.ns_desk_id = d.ns_desk_id
+		AND dr.ns_sa_id != a.ns_sa_id
+                ORDER BY ns_shift_date, ns_shift_start_time";
+
+        $db_result = mysql_query($db_query);
+
+	// Dump all the fetched data into a 2 dimensional array and return it.
+        $shifts = array();
+        while ($db_row = mysql_fetch_array($db_result)) {
+                $shifts[] = array('ns_sa_id' => $db_row[0], 'ns_shift_date' => $db_row[1],
+                        'ns_desk_shortname' => $db_row[2], 'ns_shift_start_time' => $db_row[3],
+                        'ns_shift_end_time' => $db_row[4]);
+        };
+
+        return $shifts;
+
 };
 
 

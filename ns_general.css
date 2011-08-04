@@ -1,27 +1,36 @@
 body {
-	margin: 0px 0px 0px 0px;
 	background-color: #000000;
 	color: #FFFFFF;
 }
 
 th {
 	font-family: Arial, sans-serif;
-	font-size: 14px;
+	font-size: 1em;
 	padding: 5px;
 	text-align: center;
 }
 
 td {
 	font-family: Arial, sans-serif;
-	font-size: 12px;
+	font-size: .7em;
 	padding: 3px;
+}
+
+.cal_month {
+	font-family: Georgia, Times New Roman, serif;
+	text-align: center;
+	font-size: 1.25em;
 }
 
 .cell_label {
 	text-align: left;
 	vertical-align: top;
-	font-size: 13px;
+	font-size: 1em;
 	padding: 1px;
+}
+
+.shifts {
+	text-align: center;
 }
 
 .shift_dh {
