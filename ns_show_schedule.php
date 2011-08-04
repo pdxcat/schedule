@@ -69,7 +69,7 @@ function generate_calendar_table( $gct_username ) {
 		// as appropriate.
 	
 		$base_date = date_create($_GET['date']);
-		$_SESSION['last_viewed_date'] = date_format($base_date, 'Y-m-01');
+		$_SESSION['last_viewed_date'] = date_format($base_date, 'Y-m-d');
 
 	} elseif (!empty($_SESSION['last_viewed_date']) && empty($_GET['date'])) {
 		// If there's no date in the GET parameters, but there is a 
@@ -84,7 +84,7 @@ function generate_calendar_table( $gct_username ) {
 	};
 
 
-	$first_of_month = date_create(date_format($base_date,'Y-m-') . "1");
+	$first_of_month = date_create(date_format($base_date,'Y-m-01'));
 	$last_of_month = date_create(date_format($base_date,'Y-m-t'));
 
 	start_db();
@@ -217,11 +217,11 @@ function write_table_footer( &$base_date ) {
 	$next_month = clone($base_date);
 	date_modify($next_month, '+1 month');
 
-	echo "<a href=\"ns_show_schedule.php?date=" . date_format($prev_month, 'Y-m-01') 
+	echo "<a href=\"ns_show_schedule.php?date=" . date_format($prev_month, 'Y-m-d') 
 		. "\"> Previous Month </a>";
-	echo "<a href=\"ns_show_schedule.php?date=" . date_format($today, 'Y-m-01') 
+	echo "<a href=\"ns_show_schedule.php?date=" . date_format($today, 'Y-m-d') 
 		. "\"> Current Month </a>";
-	echo "<a href=\"ns_show_schedule.php?date=" . date_format($next_month, 'Y-m-01') 
+	echo "<a href=\"ns_show_schedule.php?date=" . date_format($next_month, 'Y-m-d') 
 		. "\"> Next Month </a>";
 	
 	echo "<br />";
