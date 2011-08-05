@@ -62,6 +62,10 @@ if ($username) {
 		// and display a confirmation and link back to the calendar
 		// view.
 
+		start_db();
+
+		drop_shifts_by_sa_ids($_SESSION['drop_shifts']);
+
 		echo "Shifts dropped. <br />";
 		echo "<a href=\"ns_show_schedule.php\">Back to your schedule</a><br />";
 		session_unset($_SESSION['drop_shifts']);
@@ -84,6 +88,73 @@ if ($username) {
 
 echo "</body>";
 echo "</html>";
+
+
+function drop_shifts_by_sa_ids ( &$drop_shifts ) {
+	/*
+	For each id in the array passed to the function, do the following:
+	-Remove sa_ids which already have an ns_shift_dropped entry from the
+	 list of sa_ids to drop. 
+	-Add a new entry to ns_shift_dropped for the shift assignment.
+	-Use the current date/time as the ns_sd_droptime.
+	*/ 	
+
+	// Run function to discard from the array shift assignment ids which
+	// have already been dropped. 
+	$drop_shifts = discard_dropped_sa_ids($drop_shifts);
+
+	// Insert new ns_shift_dropped entries for each of the remaining sa_ids.
+	foreach ($drop_shifts as $shift) {
+		echo $shift . "<br />";
+	};
+
+};
+
+
+function discard_dropped_sa_ids($sa_ids) {
+	/*
+	Fetch any ns_shift_dropped entries which match the provided sa_ids and
+	remove the matching sa_ids from the provided array.
+	*/
+
+	$sa_id_list .= implode(",",$sa_ids);
+
+	/*
+	Set up and run query for grabbing the sa_ids from the provided list
+	which have an associated shift drop entry.
+	*/ 
+
+	$db_query = "
+		SELECT d.ns_sa_id
+		FROM ns_shift_dropped as d
+		WHERE d.ns_sa_id IN ($sa_id_list)";
+	
+	$db_result = mysql_query($db_query);
+
+	// If we got no matches break here.
+	if (empty($db_result)) {
+		echo "Empty result set. <br />";
+		return $sa_ids;
+	}; 
+
+	// Iterate through the results and remove from the sa_ids list any ids
+	// matching the ones retrieved from the database.
+	while ($db_row = mysql_fetch_array($db_result)) {
+		foreach ($sa_ids as $key => $value) {
+			if ($value = $db_row[0]) {
+				unset($sa_ids[$key]);
+			};
+		};
+	};
+
+	// Reset array indexes since they'll be messed up if we removed any
+	// elements from the middle.
+	$sa_ids = array_values($sa_ids);
+
+	echo "Got some results. <br />";
+	return $sa_ids;
+};
+
 
 function generate_shifts_table( $drop_shifts ) {
 	
