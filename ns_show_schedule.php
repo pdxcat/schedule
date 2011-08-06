@@ -9,7 +9,6 @@ check_session();
 <html>
 
 <head>
-
 <?php
 $username = $_SESSION['username'];
 echo "<title>The Schedule ($username)</title>";
@@ -17,83 +16,107 @@ echo "<title>The Schedule ($username)</title>";
 
 <link rel="stylesheet" type="text/css" href="master.css" media="screen" />
 <link rel="stylesheet" type="text/css" href="ns_general.css" media="screen" />
-
 </head>
 
 
 <body>
-
 <?php
-
 /* 
 To do:
 -Add support for saving which boxes were checked between different months being
- viewed. 
+ viewed. DONE (8/5/11)
 */
 
 if ($username) {
 	// do stuff for the currently logged in user
 	printf("Logged in as %s. <br /> <br />", $username);
 
-	generate_calendar_table($username);
+	if ($_POST['operation'] == "Drop Selected Shifts") {
+		// Put in the confirmation stuff here
+	} else {
+		generate_calendar_table($username);
+	};
 } else {
 	// login failure
 	echo "Fail.<br />";
 };
 
-echo "</body>";
-echo "</html>";
+?>
+</body>
 
+</html>
 
+<?php
 function generate_calendar_table( $gct_username ) {
-
 	/*
 	If the user has been viewing the calendar in the current session, but
 	has left the calendar page at some point, we want to take them back to
 	their last viewed month. This is set in the last_viewed_date variable
 	in the session data. 
 
-	However, if they are browsing around the calendar and have a different
-	date set in the GET parameters in the URL, we should use that instead.
-	Additionally, the last_viewed_date should be updated to match the date
-	in the GET parameters in this case, or set if it is not yet. 
+	If they've clicked one of the navigation buttons at the bottom the date
+	should be set appropriately based on the button. 
 
-	Finally, if we have no GET or SESSION parameter, we should default to
-	displaying the current month.
+	Additionally, whenever one of the navigation buttons is used the
+	shift boxes that were checked when the button was clicked should be
+	recorded. This is done with the update_session_shifts() function.
 	*/
-
-
-	if (!empty($_GET['date'])) {
-		// If we have a date in the GET parameters, we should use it.
-		// Also, create/update the last_viewed_date SESSION parameter
-		// as appropriate.
 	
-		$base_date = date_create($_GET['date']);
-		$_SESSION['last_viewed_date'] = date_format($base_date, 'Y-m-d');
+	if ($_POST['operation'] == "Current Month") {
+		// If current date button was clicked initialize base date with
+		// the current date.
+		$base_date = date_create();
+	
+		update_session_shifts();
 
-	} elseif (!empty($_SESSION['last_viewed_date']) && empty($_GET['date'])) {
-		// If there's no date in the GET parameters, but there is a 
-		// last_viewed_date in the SESSION data, use that.
-		
+	} elseif ($_POST['operation'] == "Next Month") {
+		// If next month button was clicked initialize base date with
+		// the last viewed date and then tack a month onto it.
 		$base_date = date_create($_SESSION['last_viewed_date']);
+		date_modify($base_date, '+1 month');
 
-	} else {
-		// If neither of the above conditions are true, default to the
-		// current date and set up the SESSION and GET parameters.
-		$base_date =  date_create();
+		update_session_shifts();
+
+	} elseif ($_POST['operation'] == "Previous Month") {
+		// If previous month button was clicked initialize base date
+		// with the last viewed date and then hack a month off it.
+		$base_date = date_create($_SESSION['last_viewed_date']);
+		date_modify($base_date, '-1 month');
+
+		update_session_shifts();
+	} else { 
+		// If no submit button was clicked to get here or we otherwise
+		// have no previous date to go off of then use the last viewed
+		// date if it is set or initialize base date as the current 
+		// date if there's nothing else to go off of.
+		if (!empty($_SESSION['last_viewed_date'])) {	
+			$base_date = date_create($_SESSION['last_viewed_date']);		
+		} else {
+			$base_date = date_create();
+		};
 	};
 
+	// Once we're done figuring out the date to use to generate the page
+	// update the last viewed date in the SESSION parameters.
+	$_SESSION['last_viewed_date'] = date_format($base_date, 'Y-m-d');
 
+	// Come up with the first and last dates of the month by using some
+	// gross tricks with the built in date manipulation functions.
 	$first_of_month = date_create(date_format($base_date,'Y-m-01'));
 	$last_of_month = date_create(date_format($base_date,'Y-m-t'));
 
+	// Fire up a connection to the database, then grab the currently
+	// logged in user's id in the schedule database, follow it up by 
+	// sucking up all of the assigned shifts for this user. 
 	start_db();
 	$gct_cat_id = get_cat_id($gct_username);
 	$gct_shifts = get_shifts($gct_cat_id[0]);
 	
+	// Start actually assembling the calendar table into which all of this
+	// shift data is outputted.
 	write_table_header($base_date);
 
-	echo "<form action=\"ns_drop_shifts.php\" method=\"post\">";
+	echo "<form action=\"ns_show_schedule.php\" method=\"post\">";
 	
 	echo "<tr valign=\"top\">";
 	for ($cell = 1; $cell <= 42; $cell++) {	
@@ -136,28 +159,38 @@ function generate_calendar_table( $gct_username ) {
 
 	write_table_footer($base_date);
 
-	echo "<input type=\"submit\" name=\"submit\" value=\"Drop Selected Shifts\">";
-	echo "</form>";
 };
 
 
 function write_dated_cell(&$current_date,&$gct_shifts) {
 
-	/*
-	Writes out the date in the top left of the cell
-	*/
+	// Writes out the date in the top left of the cell
 	echo "<td width=\"120\" height=\"100\">";
 	echo "<span align=\"left\" class=\"cell_label\">";
 	echo date_format($current_date, 'j');
 	echo "</span>";
 
-	/*
-	Writes out shift start and end times
-	*/
+	// Writes out shift start and end times
 	echo "<div class=\"shifts\">";
 	foreach ($gct_shifts as $shift) {
 		if ($shift['ns_shift_date'] == date_format($current_date,'Y-m-d')) {
-		echo "<input type=\"checkbox\" name=\"drop_shifts[]\" value=\"" . $shift['ns_sa_id'] . "\">";
+			// Use the state of the shift from the SESSION params,
+			// if it's been set.
+			if ($_SESSION['drop_shifts'][$shift['ns_sa_id']] == 1) {
+				// If the parameter for the shift is set and
+				// has a value of 1, display a checked box and
+				// put in a hidden field to set the value to 
+				// 0 so if the box is unchecked that change is
+				// registered.
+				echo "<input type=\"hidden\" name=\"drop_shifts[" . $shift['ns_sa_id']. "]\"
+					value=\"0\">";
+				echo "<input type=\"checkbox\" name=\"drop_shifts[" . $shift['ns_sa_id'] . "]\" 
+					value=\"1\" checked>";	
+			} else {
+				echo "<input type=\"checkbox\" name=\"drop_shifts[" . $shift['ns_sa_id'] . "]\" 
+					value=\"1\">";
+			};
+	
 			if ($shift['ns_desk_shortname'] == "Kennel") {
 				echo "<span class=\"shift_kn\">";
 				echo $shift['ns_shift_start_time'] . " - " . $shift['ns_shift_end_time'];
@@ -179,16 +212,13 @@ function write_dated_cell(&$current_date,&$gct_shifts) {
 
 
 function write_blank_cell() {
-	
 	echo "
 	<td width=\"120\" height=\"100\">
 	</td>";
-
 };
 
 
 function write_table_header( &$base_date ) {
-
 	echo "
 	<div class=\"cal_month\">" .
 	date_format($base_date,'F Y')
@@ -210,25 +240,37 @@ function write_table_header( &$base_date ) {
 
 function write_table_footer( &$base_date ) {
 	echo "</table>";
+	
 
-	$today = date_create();
-	$prev_month = clone($base_date);
-	date_modify($prev_month, '-1 month');
-	$next_month = clone($base_date);
-	date_modify($next_month, '+1 month');
-
-	echo "<a href=\"ns_show_schedule.php?date=" . date_format($prev_month, 'Y-m-d') 
-		. "\"> Previous Month </a>";
-	echo "<a href=\"ns_show_schedule.php?date=" . date_format($today, 'Y-m-d') 
-		. "\"> Current Month </a>";
-	echo "<a href=\"ns_show_schedule.php?date=" . date_format($next_month, 'Y-m-d') 
-		. "\"> Next Month </a>";
+	echo "<input type=\"submit\" name=\"operation\" value=\"Previous Month\">";
+	echo "<input type=\"submit\" name=\"operation\" value=\"Current Month\">";
+	echo "<input type=\"submit\" name=\"operation\" value=\"Next Month\">";
+	echo "<br />";
+	echo "<input type=\"submit\" name=\"operation\" value=\"Drop Selected Shifts\">";
+	echo "</form>";
+	echo "<br />";
 	
 	echo "<br />";
 	echo "Shift key: <br />";
 	echo "<span class=\"shift_dh\">DOGHaus</span><br />";
 	echo "<span class=\"shift_kn\">Kennel</span><br />";
 };
+
+
+function update_session_shifts() {
+	// If no changes were made then return early.
+	if (!isset($_POST['drop_shifts'])) {
+		return 1;
+	};
+	
+	foreach ($_POST['drop_shifts'] as $key => $val) {
+		if ($val == 1) {
+			$_SESSION['drop_shifts'][$key] = $val;
+		} else {
+			unset($_SESSION['drop_shifts'][$key]);
+		};
+	}; 
+}; 
 
 ?>
 

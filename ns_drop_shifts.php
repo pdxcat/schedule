@@ -24,16 +24,9 @@ echo "<title>The Schedule ($username)</title>";
 <body>
 
 <?php
-
 if ($username) {
 	// do stuff for the currently logged in user
 	printf("Logged in as %s. <br />", $username);
-	
-	// If a list of shift assignment ids to drop was submitted to the form
-	// dump them into a SESSION parameter for use later
-	if (!empty($_POST['drop_shifts'])) {
-		$_SESSION['drop_shifts'] = $_POST['drop_shifts'];
-	};
 	
 	if ($_POST['operation'] == "Abort") {
 		// If the user clicked the abort button on the page after landing here
@@ -51,7 +44,11 @@ if ($username) {
 
 		start_db();
 
-		generate_shifts_table($_SESSION['drop_shifts']);
+		foreach ($_SESSION['drop_shifts'] as $key => $val) {
+			$drop_shifts_ids[] = $key;
+		};
+
+		generate_shifts_table($drop_shifts_ids);
 
 		echo "<form action=\"ns_drop_shifts.php\" method=\"post\">";
 		echo "<input type=\"submit\" name=\"operation\" value=\"Abort\">";
@@ -64,7 +61,11 @@ if ($username) {
 
 		start_db();
 
-		drop_shifts_by_sa_ids($_SESSION['drop_shifts']);
+		foreach ($_SESSION['drop_shifts'] as $key => $val) {
+			$drop_shifts_ids[] = $key;
+		};
+
+		generate_shifts_table($drop_shifts_ids);
 
 		echo "Shifts dropped. <br />";
 		echo "<a href=\"ns_show_schedule.php\">Back to your schedule</a><br />";
@@ -85,11 +86,12 @@ if ($username) {
 	// login failure
 	echo "Fail.<br />";
 };
+?>
 
-echo "</body>";
-echo "</html>";
+</body>
+</html>
 
-
+<?php
 function drop_shifts_by_sa_ids ( &$drop_shifts ) {
 	/*
 	For each id in the array passed to the function, do the following:
@@ -199,6 +201,5 @@ function write_table_header() {
 function write_table_footer() {
 	echo "</table>";
 };
-
 ?>
 
