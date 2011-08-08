@@ -40,7 +40,9 @@ if ($username) {
 		stuff. If not, note that no shifts were selected to drop and
 		redraw the calendar.
 		*/
-	
+		
+		// Update SESSION data to account for any new shift selections
+		// or deselections that were POSTed before we do anything else.
 		update_session_shifts();
 		
 		if (is_array($_SESSION['drop_shifts'])) {

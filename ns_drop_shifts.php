@@ -47,7 +47,7 @@ if ($username) {
 			$drop_shifts_ids[] = $key;
 		};
 
-		generate_shifts_table($drop_shifts_ids);
+		drop_shifts_by_sa_ids($drop_shifts_ids);
 
 		echo "Shifts dropped. <br />";
 		echo "<a href=\"ns_show_schedule.php\">Back to your schedule</a><br />";
@@ -91,15 +91,14 @@ function discard_dropped_sa_ids($sa_ids) {
 
 	// If we got no matches break here.
 	if (empty($db_result)) {
-		echo "Empty result set. <br />";
 		return $sa_ids;
 	}; 
 
 	// Iterate through the results and remove from the sa_ids list any ids
 	// matching the ones retrieved from the database.
 	while ($db_row = mysql_fetch_array($db_result)) {
-		foreach ($sa_ids as $key => $value) {
-			if ($value = $db_row[0]) {
+		foreach ($sa_ids as $key => $val) {
+			if ($val == $db_row[0]) {
 				unset($sa_ids[$key]);
 			};
 		};
@@ -109,7 +108,6 @@ function discard_dropped_sa_ids($sa_ids) {
 	// elements from the middle.
 	$sa_ids = array_values($sa_ids);
 
-	echo "Got some results. <br />";
 	return $sa_ids;
 };
 
@@ -129,9 +127,15 @@ function drop_shifts_by_sa_ids ( &$drop_shifts ) {
 
 	// Insert new ns_shift_dropped entries for each of the remaining sa_ids.
 	foreach ($drop_shifts as $shift) {
-		echo $shift . "<br />";
-	};
+		$now = date_create();
+		$timestamp = date_format($now,"Y-m-d H:i:s");
+		
+		$db_query = "
+			INSERT INTO `ns_shift_dropped` (ns_sa_id,ns_sd_droptime)
+			VALUES ($shift,'$timestamp')";
 
+		mysql_query($db_query);
+	};
 };
 ?>
 
