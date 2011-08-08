@@ -33,7 +33,7 @@ function get_shifts( $gs_id ) {
 		ns_shift_end_time => x], 
 		...]
 
-        We only want to fetch shifts schedule on or after today's date, so
+        We only want to fetch shifts scheduled on or after today's date, so
         we need to know what today is.
 	*/
         $today = date("Y-m-d");
@@ -88,13 +88,17 @@ function get_shifts_from_sa_ids( $sa_ids ) {
 	ns_shift_start_time => x, 
 	ns_shift_end_time => x], 
 	...]
-	*/	
+
+        We only want to fetch shifts scheduled on or after today's date, so
+        we need to know what today is.
+	*/
+        $today = date("Y-m-d");
 
 	// Build list of shift IDs
 	$sa_id_list = "'";	
 	$sa_id_list .= implode("','",$sa_ids);
 	$sa_id_list .= "'";
-	
+
 	/*
 	Set up and run query for getting shift entries.
 
@@ -109,14 +113,16 @@ function get_shifts_from_sa_ids( $sa_ids ) {
 	*/
 
         $db_query = "
-                SELECT a.ns_sa_id, s.ns_shift_date, d.ns_desk_shortname, s.ns_shift_start_time, s.ns_shift_end_time
-                FROM ns_shift_assigned as a, ns_shift as s, ns_desk as d, ns_shift_dropped as dr
-                WHERE ns_shift_date >= '$today'
-                AND a.ns_sa_id IN ($sa_id_list)
-                AND a.ns_shift_id = s.ns_shift_id
-                AND a.ns_desk_id = d.ns_desk_id
-		AND dr.ns_sa_id != a.ns_sa_id
-                ORDER BY ns_shift_date, ns_shift_start_time";
+		SELECT a.ns_sa_id, s.ns_shift_date, d.ns_desk_shortname, s.ns_shift_start_time, s.ns_shift_end_time
+		FROM ns_shift_assigned as a, ns_shift as s, ns_desk as d
+		WHERE s.ns_shift_date >= '$today'
+		AND a.ns_sa_id IN ($sa_id_list)
+		AND a.ns_shift_id = s.ns_shift_id
+		AND a.ns_desk_id = d.ns_desk_id
+		AND a.ns_sa_id NOT IN (
+		SELECT ns_sa_id
+		FROM ns_shift_dropped)
+		ORDER BY ns_shift_date, ns_shift_start_time";
 
         $db_result = mysql_query($db_query);
 

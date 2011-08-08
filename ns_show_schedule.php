@@ -31,11 +31,54 @@ if ($username) {
 	// do stuff for the currently logged in user
 	printf("Logged in as %s. <br /> <br />", $username);
 
+	start_db();	
+
 	if ($_POST['operation'] == "Drop Selected Shifts") {
-		// Put in the confirmation stuff here
+		/*
+		If the user has clicked the drop shifts button, check if there
+		were any shifts selected. If so, display the confirmation 
+		stuff. If not, note that no shifts were selected to drop and
+		redraw the calendar.
+		*/
+	
+		update_session_shifts();
+		
+		if (is_array($_SESSION['drop_shifts'])) {
+			echo "Are you sure you wish to drop the following shifts?<br />";
+
+			foreach ($_SESSION['drop_shifts'] as $key => $val) {
+				$drop_shifts_ids[] = $key;
+			};
+
+			generate_shifts_table($drop_shifts_ids);
+
+			echo "<form action=\"ns_show_schedule.php\" method=\"post\">";
+			echo "<input type=\"submit\" name=\"operation\" value=\"Abort\">";
+			echo "</form>";
+
+			echo "<form action=\"ns_drop_shifts.php\" method=\"post\">";
+			echo "<input type=\"submit\" name=\"operation\" value=\"Proceed\">";
+			echo "</form>";
+		} else {
+			echo "No shifts were selected to drop.<br />";
+
+			generate_shifts_calendar($username);
+		};
+	} elseif ($_POST['operation'] == "Abort") {
+		// If the user clicked the abort button in the confirmation
+		// dialog then clear the SESSION array of shifts to drop and
+		// note what's happened.
+
+		echo "Shift drop cancelled, shift selections have been cleared.<br />";
+		session_unset($_SESSION['drop_shifts']);
+
+		generate_shifts_calendar($username);
 	} else {
-		generate_calendar_table($username);
+		generate_shifts_calendar($username);
 	};
+
+	print_r($_SESSION['drop_shifts']);
+
 } else {
 	// login failure
 	echo "Fail.<br />";
@@ -47,7 +90,8 @@ if ($username) {
 </html>
 
 <?php
-function generate_calendar_table( $gct_username ) {
+// Functions to generate a calendar of shifts.
+function generate_shifts_calendar( $gct_username ) {
 	/*
 	If the user has been viewing the calendar in the current session, but
 	has left the calendar page at some point, we want to take them back to
@@ -114,7 +158,7 @@ function generate_calendar_table( $gct_username ) {
 	
 	// Start actually assembling the calendar table into which all of this
 	// shift data is outputted.
-	write_table_header($base_date);
+	write_calendar_header($base_date);
 
 	echo "<form action=\"ns_show_schedule.php\" method=\"post\">";
 	
@@ -136,7 +180,7 @@ function generate_calendar_table( $gct_username ) {
 			date_diff(date_format($current_date,'Y-m-d'),date_format($last_of_month,'Y-m-d')) > 0;
 			date_modify($current_date,'+1 day')) { 
 			
-				write_dated_cell($current_date,$gct_shifts); 
+				write_dated_calendar_cell($current_date,$gct_shifts); 
 				
 				// Start a new row every seven cells.
 				if ($cell % 7 == 0 && $cell < 42) {
@@ -148,7 +192,7 @@ function generate_calendar_table( $gct_username ) {
 			
 		};			
 		
-		write_blank_cell();
+		write_blank_calendar_cell();
 		
 		// Start a new row every seven cells.
 		if ($cell % 7 == 0 && $cell < 42) {
@@ -157,12 +201,12 @@ function generate_calendar_table( $gct_username ) {
 	}; 
 	echo "</tr>";
 
-	write_table_footer($base_date);
+	write_calendar_footer($base_date);
 
 };
 
 
-function write_dated_cell(&$current_date,&$gct_shifts) {
+function write_dated_calendar_cell(&$current_date,&$gct_shifts) {
 
 	// Writes out the date in the top left of the cell
 	echo "<td width=\"120\" height=\"100\">";
@@ -211,14 +255,14 @@ function write_dated_cell(&$current_date,&$gct_shifts) {
 };
 
 
-function write_blank_cell() {
+function write_blank_calendar_cell() {
 	echo "
 	<td width=\"120\" height=\"100\">
 	</td>";
 };
 
 
-function write_table_header( &$base_date ) {
+function write_calendar_header( &$base_date ) {
 	echo "
 	<div class=\"cal_month\">" .
 	date_format($base_date,'F Y')
@@ -238,7 +282,7 @@ function write_table_header( &$base_date ) {
 };
 
 
-function write_table_footer( &$base_date ) {
+function write_calendar_footer( &$base_date ) {
 	echo "</table>";
 	
 
@@ -255,6 +299,54 @@ function write_table_footer( &$base_date ) {
 	echo "<span class=\"shift_dh\">DOGHaus</span><br />";
 	echo "<span class=\"shift_kn\">Kennel</span><br />";
 };
+// End of shift calendar functions.
+
+
+// Functions used in the generation of a table of shifts.
+function generate_shifts_table( $drop_shifts ) {
+	
+	// Get shifts
+	$shifts = get_shifts_from_sa_ids($drop_shifts);
+
+	// See if we even have any records to display, if so write them out.
+	if ($shifts) {
+		write_table_header();
+		foreach ($shifts as $shift) {
+			write_table_cell(array_slice($shift,1,4));
+		};
+		write_table_footer();
+	} else {
+	
+		echo "No shifts to display. <br />";
+	};
+};
+
+
+function write_table_cell( $ws_shift ) {
+	echo "<tr>\n";
+	foreach ($ws_shift as $cell) {
+		echo "<td>$cell</td>\n";
+	};
+	echo "</tr>\n";
+};
+
+
+function write_table_header() {
+	echo "
+		<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\">\n
+		<tr>\n
+			<th>Date</th>\n
+			<th>Desk</th>\n
+			<th>Shift Start</th>\n
+			<th>Shift End</th>\n
+		</tr>\n";
+};
+
+
+function write_table_footer() {
+	echo "</table>";
+};
+// End of shift table functions.
 
 
 function update_session_shifts() {

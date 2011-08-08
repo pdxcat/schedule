@@ -28,32 +28,14 @@ if ($username) {
 	// do stuff for the currently logged in user
 	printf("Logged in as %s. <br />", $username);
 	
-	if ($_POST['operation'] == "Abort") {
-		// If the user clicked the abort button on the page after landing here
-		// don't do anything except clear the SESSION parameter of ids to drop
-		// and display a link to take them back to the schedule view.
-		echo "OHSHI... Cancelling that.<br />";
-		echo "<a href=\"ns_show_schedule.php\">Back to your schedule</a><br />";
-		session_unset($_SESSION['drop_shifts']);
-	} elseif (is_array($_SESSION['drop_shifts']) && empty($_POST['operation'])) {
-		// If the user just landed here for the first time give them
-		// the choice of proceeding with or aborting dropping of the
-		// shifts they selected on the schedule monthly view.
 
-		echo "Are you sure you wish to drop the following shifts?<br />";
+	if (empty($_POST['operation'])) {
+		// The user really shouldn't get to this page without having
+		// clicked a button on the view/drop shifts page.
 
-		start_db();
-
-		foreach ($_SESSION['drop_shifts'] as $key => $val) {
-			$drop_shifts_ids[] = $key;
-		};
-
-		generate_shifts_table($drop_shifts_ids);
-
-		echo "<form action=\"ns_drop_shifts.php\" method=\"post\">";
-		echo "<input type=\"submit\" name=\"operation\" value=\"Abort\">";
-		echo "<input type=\"submit\" name=\"operation\" value=\"Proceed\">";
-		echo "</form>";
+		echo "No operation to perform. <br />";
+		echo "<a href=\"ns_show_schedule.php\">Return to your schedule</a><br />";
+		
 	} elseif (is_array($_SESSION['drop_shifts']) && $_POST['operation'] == "Proceed") {
 		// If the user has confirmed dropping the shifts then proceed
 		// and display a confirmation and link back to the calendar
@@ -70,12 +52,7 @@ if ($username) {
 		echo "Shifts dropped. <br />";
 		echo "<a href=\"ns_show_schedule.php\">Back to your schedule</a><br />";
 		session_unset($_SESSION['drop_shifts']);
-	} elseif (!$_SESSION['drop_shifts']) {
-		// If no shift assignment ids were passed along don't do
-		// anything.
-	
-		echo "No shifts selected to drop.<br />";
-		echo "<a href=\"ns_show_schedule.php\">Back to your schedule</a><br />";
+
 	} else {
 		// Shouldn't ever really get here.
 	
@@ -92,27 +69,6 @@ if ($username) {
 </html>
 
 <?php
-function drop_shifts_by_sa_ids ( &$drop_shifts ) {
-	/*
-	For each id in the array passed to the function, do the following:
-	-Remove sa_ids which already have an ns_shift_dropped entry from the
-	 list of sa_ids to drop. 
-	-Add a new entry to ns_shift_dropped for the shift assignment.
-	-Use the current date/time as the ns_sd_droptime.
-	*/ 	
-
-	// Run function to discard from the array shift assignment ids which
-	// have already been dropped. 
-	$drop_shifts = discard_dropped_sa_ids($drop_shifts);
-
-	// Insert new ns_shift_dropped entries for each of the remaining sa_ids.
-	foreach ($drop_shifts as $shift) {
-		echo $shift . "<br />";
-	};
-
-};
-
-
 function discard_dropped_sa_ids($sa_ids) {
 	/*
 	Fetch any ns_shift_dropped entries which match the provided sa_ids and
@@ -158,48 +114,24 @@ function discard_dropped_sa_ids($sa_ids) {
 };
 
 
-function generate_shifts_table( $drop_shifts ) {
-	
-	// Get shifts
-	$shifts = get_shifts_from_sa_ids($drop_shifts);
+function drop_shifts_by_sa_ids ( &$drop_shifts ) {
+	/*
+	For each id in the array passed to the function, do the following:
+	-Remove sa_ids which already have an ns_shift_dropped entry from the
+	 list of sa_ids to drop. 
+	-Add a new entry to ns_shift_dropped for the shift assignment.
+	-Use the current date/time as the ns_sd_droptime.
+	*/ 	
 
-	// See if we even have any records to display, if so write them out.
-	if ($shifts) {
-		write_table_header();
-		foreach ($shifts as $shift) {
-			write_shift_cell(array_slice($shift,1,4));
-		};
-		write_table_footer();
-	} else {
-		// No records
-		echo "No shifts to display. <br />";
+	// Run function to discard from the array shift assignment ids which
+	// have already been dropped. 
+	$drop_shifts = discard_dropped_sa_ids($drop_shifts);
+
+	// Insert new ns_shift_dropped entries for each of the remaining sa_ids.
+	foreach ($drop_shifts as $shift) {
+		echo $shift . "<br />";
 	};
-};
 
-
-function write_shift_cell( $ws_shift ) {
-	echo "<tr>\n";
-	foreach ($ws_shift as $cell) {
-		echo "<td>$cell</td>\n";
-	};
-	echo "</tr>\n";
-};
-
-
-function write_table_header() {
-	echo "
-		<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\">\n
-		<tr>\n
-			<th>Date</th>\n
-			<th>Desk</th>\n
-			<th>Shift Start</th>\n
-			<th>Shift End</th>\n
-		</tr>\n";
-};
-
-
-function write_table_footer() {
-	echo "</table>";
 };
 ?>
 
