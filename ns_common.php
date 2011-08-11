@@ -76,6 +76,78 @@ function get_shifts( $gs_id ) {
 };
 
 
+function get_shifts_to_pickup( $gsp_id ) {
+        /* 
+	Function to get the shift information for display on the calendar view
+	page used for selection of shifts to pick up.
+	
+	Returns an array of shifts available for the CAT in question to pick up
+	with the format:
+
+        We only want to fetch shifts on or after today's date, so we need to 
+	know what today is.
+	*/
+        $today = date("Y-m-d");
+
+        /* 
+	Set up and run query for getting shift entries.
+
+	A shift is available for pickup if it has an assignment entry with an
+	associated drop entry which does not have a pickup entry associated 
+	with it.
+	
+	Constraints:
+	-Shift must not overlap with the user's assigned shifts (the user 
+	 should have no assignments for the same shift id as the drop shift
+	 entry)
+	-If there are multiple dropped shifts for a given shift, time, and 
+	 location, only one of these should be retrieved. 
+	-Shift must have an assignment, with a drop entry which has no pick up
+	 entry associated with it
+
+	Data needed:
+	-ns_sd_id (shift drop id, needed for insertion into shift pickup table)
+	-ns_desk_shortname (for display)
+	-ns_shift_date, ns_shift_start_time, ns_shift_end_time (for display)
+
+
+
+	Resolves the desk id in the shift assignment to the short name for the
+	desk from the desks table.
+	*/
+        $db_query = "
+		SELECT sd.ns_sd_id, de.ns_desk_shortname, s.ns_shift_date, s.ns_shift_start_time, s.ns_shift_end_time
+		FROM ns_shift as s, ns_desk as de, ns_shift_assigned as sa, ns_shift_dropped as sd
+		WHERE sd.ns_sa_id = sa.ns_sa_id
+		AND sa.ns_shift_id = s.ns_shift_id
+		AND sa.ns_desk_id = de.ns_desk_id
+		AND s.ns_shift_date >= '$today'
+		AND s.ns_shift_id NOT IN (
+			SELECT s.ns_shift_id
+			FROM ns_shift as s, ns_shift_assigned as sa
+			WHERE sa.ns_shift_id = s.ns_shift_id
+			AND sa.ns_cat_id = '$gsp_id'
+			AND sa.ns_sa_id NOT IN (
+				SELECT ns_sa_id
+				FROM ns_shift_dropped))
+		AND sd.ns_sd_id NOT IN (
+			SELECT ns_sd_id
+			FROM ns_shift_picked_up)";
+
+        $db_result = mysql_query($db_query);
+
+	// Dump all the fetched data into a 2 dimensional array and return it.
+        $shifts = array();
+        while ($db_row = mysql_fetch_array($db_result)) {
+                $shifts[] = array('ns_sa_id' => $db_row[0], 'ns_shift_date' => $db_row[1],
+                        'ns_desk_shortname' => $db_row[2], 'ns_shift_start_time' => $db_row[3],
+                        'ns_shift_end_time' => $db_row[4]);
+        };
+
+        return $shifts;
+};
+
+
 function get_shifts_from_sa_ids( $sa_ids ) {
 	/*
 	Returns an array of shifts associated with assignments by id in the
