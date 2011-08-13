@@ -79,8 +79,6 @@ if ($username) {
 		generate_shifts_calendar($username);
 	};
 
-	print_r($_SESSION['drop_shifts']);
-
 } else {
 	// login failure
 	echo "Fail.<br />";
