@@ -14,12 +14,21 @@ $username = $_SESSION['username'];
 echo "<title>The Schedule ($username)</title>";
 ?>
 
-<link rel="stylesheet" type="text/css" href="master.css" media="screen" />
 <link rel="stylesheet" type="text/css" href="ns_general.css" media="screen" />
 </head>
 
 
 <body>
+
+<div id="page-container">
+
+<div id="top-nav">
+<?php
+include 'ns_top_navigation.php';
+?>
+</div>
+
+<div id="content">
 <?php
 /* 
 To do:
@@ -66,6 +75,7 @@ if ($username) {
 
 			generate_shifts_calendar($username);
 		};
+
 	} elseif ($_POST['operation'] == "Abort") {
 		// If the user clicked the abort button in the confirmation
 		// dialog then clear the SESSION array of shifts to drop and
@@ -75,7 +85,17 @@ if ($username) {
 		session_unset($_SESSION['drop_shifts']);
 
 		generate_shifts_calendar($username);
+
+	} elseif (empty($_POST['operation'])) {
+		// Clear selections if we got here without having clicked one
+		// of the form buttons.
+		session_unset($_SESSION['drop_shifts']);
+		
+		generate_shifts_calendar($username);
+
 	} else {
+		// Any other POST operation will be processed within the
+		// calendar generation function.
 		generate_shifts_calendar($username);
 	};
 
@@ -85,6 +105,8 @@ if ($username) {
 };
 
 ?>
+</div>
+</div>
 </body>
 
 </html>
@@ -285,7 +307,7 @@ function write_calendar_header( &$base_date ) {
 function write_calendar_footer( &$base_date ) {
 	echo "</table>";
 	
-
+	echo "<div id=\"cal-buttons\">";
 	echo "<input type=\"submit\" name=\"operation\" value=\"Previous Month\">";
 	echo "<input type=\"submit\" name=\"operation\" value=\"Current Month\">";
 	echo "<input type=\"submit\" name=\"operation\" value=\"Next Month\">";
@@ -293,6 +315,7 @@ function write_calendar_footer( &$base_date ) {
 	echo "<input type=\"submit\" name=\"operation\" value=\"Drop Selected Shifts\">";
 	echo "</form>";
 	echo "<br />";
+	echo "</div>";
 	
 	echo "<br />";
 	echo "Shift key: <br />";

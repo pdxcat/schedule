@@ -20,9 +20,17 @@ echo "<title>The Schedule ($username)</title>";
 
 </head>
 
-
 <body>
 
+<div id="page-container">
+
+<div id="top-nav">
+<?php
+include 'ns_top_navigation.php';
+?>
+</div>
+
+<div id="content">
 <?php
 
 if ($username) {
@@ -38,5 +46,7 @@ if ($username) {
 
 ?>
 
+</div>
+</div>
 </body>
 </html>

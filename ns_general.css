@@ -5,15 +5,33 @@ body {
 
 th {
 	font-family: Arial, sans-serif;
-	font-size: 1em;
+	font-size: 14px;
 	padding: 5px;
 	text-align: center;
 }
 
 td {
 	font-family: Arial, sans-serif;
-	font-size: .7em;
+	font-size: 10px;
 	padding: 3px;
+}
+
+#page-container {
+	width: 960px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+#content {
+	min-height: 350px;
+}
+
+#top-nav {
+	height: 40px;
+}
+
+#cal-buttons {
+	text-align: center;
 }
 
 .cal_month {
@@ -25,7 +43,7 @@ td {
 .cell_label {
 	text-align: left;
 	vertical-align: top;
-	font-size: 1em;
+	font-size: 12px;
 	padding: 1px;
 }
 
