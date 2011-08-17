@@ -30,11 +30,6 @@ include 'ns_top_navigation.php';
 
 <div id="content">
 <?php
-/* 
-To do:
--Add support for saving which boxes were checked between different months being
- viewed. DONE (8/5/11)
-*/
 
 if ($username) {
 	// do stuff for the currently logged in user
@@ -94,6 +89,8 @@ if ($username) {
 		generate_shifts_calendar($username);
 
 	} else {
+		update_session_shifts();
+
 		// Any other POST operation will be processed within the
 		// calendar generation function.
 		generate_shifts_calendar($username);
@@ -133,15 +130,11 @@ function generate_shifts_calendar( $gct_username ) {
 		// the current date.
 		$base_date = date_create();
 	
-		update_session_shifts();
-
 	} elseif ($_POST['operation'] == "Next Month") {
 		// If next month button was clicked initialize base date with
 		// the last viewed date and then tack a month onto it.
 		$base_date = date_create($_SESSION['last_viewed_date']);
 		date_modify($base_date, '+1 month');
-
-		update_session_shifts();
 
 	} elseif ($_POST['operation'] == "Previous Month") {
 		// If previous month button was clicked initialize base date
@@ -149,8 +142,8 @@ function generate_shifts_calendar( $gct_username ) {
 		$base_date = date_create($_SESSION['last_viewed_date']);
 		date_modify($base_date, '-1 month');
 
-		update_session_shifts();
 	} else { 
+		/*
 		// If no submit button was clicked to get here or we otherwise
 		// have no previous date to go off of then use the last viewed
 		// date if it is set or initialize base date as the current 
@@ -160,6 +153,10 @@ function generate_shifts_calendar( $gct_username ) {
 		} else {
 			$base_date = date_create();
 		};
+		*/
+		
+		// Default to current date.
+		$base_date = date_create();
 	};
 
 	// Once we're done figuring out the date to use to generate the page
@@ -199,7 +196,7 @@ function generate_shifts_calendar( $gct_username ) {
 		if ((date_format($first_of_month, 'w') + 1) == $cell) {
 			
 			for($current_date = $first_of_month;
-			date_diff(date_format($current_date,'Y-m-d'),date_format($last_of_month,'Y-m-d')) > 0;
+			date_diff(date_format($current_date,'Y-m-d'),date_format($last_of_month,'Y-m-d')) >= 0;
 			date_modify($current_date,'+1 day')) { 
 			
 				write_dated_calendar_cell($current_date,$gct_shifts); 
@@ -210,6 +207,14 @@ function generate_shifts_calendar( $gct_username ) {
 				};
 
 				$cell++;
+
+				// Hackish shit necessary due to the hackishness of the
+				// date_diff function I'm using as a stand in for the
+				// real thing since we're running ancient ass PHP.
+				if (date_diff(date_format($current_date,'Y-m-d'),
+				date_format($last_of_month,'Y-m-d')) == 0) {
+					break;
+				};
 			};
 			
 		};			
