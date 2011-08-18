@@ -160,7 +160,6 @@ function write_table_header() {
 
 function write_table_cell($date) {
 	echo "<td>";
-	echo date_format($date, 'Y-m-d');
 	echo "</td>";
 };
 
