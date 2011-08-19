@@ -3,11 +3,22 @@ body {
 	color: #FFFFFF;
 }
 
+table {
+	width: auto;
+	margin-left: auto;
+	margin-right: auto;
+	background-color: #003300;
+	border-collapse: collapse;
+	border: 1px solid;
+	empty-cells: show;
+}
+
 th {
 	font-family: Arial, sans-serif;
 	font-size: 14px;
 	padding: 5px;
 	text-align: center;
+	border: 1px solid;
 }
 
 td {
@@ -33,6 +44,20 @@ td {
 #top-nav {
 	height: 40px;
 	background-color: #663300;
+}
+
+.master-schedule-table {
+
+}
+
+.data .master-schedule-table {
+	width: 250px;
+	font-size: 1em;
+}
+
+.hour-key .master-schedule-table {
+	text-align: center;
+	font-size: 1.25em;
 }
 
 #cal-buttons {
@@ -64,12 +89,3 @@ td {
 	color: #009933;
 }
 
-table {
-	width: auto;
-	margin-left: auto;
-	margin-right: auto;
-	background-color: #003300;
-	border-collapse: separate;
-	border: 1px solid;
-	empty-cells: show;
-}

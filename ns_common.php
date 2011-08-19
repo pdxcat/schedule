@@ -75,6 +75,50 @@ function get_shifts( $gs_id ) {
         return $shifts;
 };
 
+function get_shifts_for_all( &$start_date, &$end_date ) {
+	/*
+	Function to fetch all active assignments in a specified date range.
+	This is used to populate the weekly schedule displays which show when
+	people are on shift.
+
+	Format for return array looks like:
+	$return_array
+	['ns_shift_date']
+		['ns_shift_start_time']
+			['ns_cat_uname']
+			['ns_desk_shortname']
+	*/
+
+	$gsfa_start_date = date_format($start_date, 'Y-m-d');
+	$gsfa_end_date = date_format($end_date, 'Y-m-d');
+
+        $db_query = "
+		SELECT s.ns_shift_date, s.ns_shift_start_time, c.ns_cat_uname, d.ns_desk_shortname
+		FROM ns_shift as s, ns_shift_assigned as a, ns_desk as d, ns_cat as c
+		WHERE s.ns_shift_date >= '$gsfa_start_date' 
+		AND s.ns_shift_date <= '$gsfa_end_date'
+		AND a.ns_cat_id = c.ns_cat_id
+		AND a.ns_desk_id = d.ns_desk_id
+		AND a.ns_shift_id = s.ns_shift_id
+		AND a.ns_sa_id NOT IN (
+			SELECT ns_sa_id
+			FROM ns_shift_dropped)
+		ORDER BY d.ns_desk_shortname,s.ns_shift_date,s.ns_shift_start_time,c.ns_cat_uname
+		";
+
+        $db_result = mysql_query($db_query);
+
+	// Dump all the fetched data into a 2 dimensional array and return it.
+        $shifts = array();
+        while ($db_row = mysql_fetch_array($db_result)) {
+                $shifts[$db_row[0]][$db_row[1]][] = array(
+			'ns_cat_uname' => $db_row[2],
+			'ns_desk_shortname' => $db_row[3]);
+        };
+
+        return $shifts;
+}; 
+
 
 function get_shifts_to_pickup( $gsp_id ) {
         /* 

@@ -100,9 +100,10 @@ function generate_weekly_table($username, $base_date) {
 	date_modify($last_of_week, '+5 days');
 
 	// Fetch all active shift assignments and shift info between those dates.
+	start_db();
+	$gwt_shifts = get_shifts_for_all($first_of_week,$last_of_week);
 
 	// Generate schedule table from that info.
-	echo "<span class=\"master-schedule-table\">";
 	write_table_header();
 
 	// Loop over each hour in the work day
@@ -115,12 +116,12 @@ function generate_weekly_table($username, $base_date) {
 			// label.
 			if (date_format($current_date,'w') == 1) {
 				echo "<tr>";
-				echo "<td>";
-				echo $hour;
+				echo "<td class=\"hour-key\">";
+				echo sprintf("%02d", $hour) . "00";
 				echo "</td>";
 			};
 	
-			write_table_cell($current_date);
+			write_table_cell($current_date, $hour, $gwt_shifts);
 
 			// If day is Saturday, cap off the row after writing out the
 			// cell contents.
@@ -139,13 +140,11 @@ function generate_weekly_table($username, $base_date) {
 	};
 
 	write_table_footer();
-
-	echo "</span>";
 };
 
 
 function write_table_header() {
-	echo "<table>";
+	echo "<table class=\"master-schedule-table\">";
 	echo "<tr>";
 	echo "<th></th>";
 	echo "<th>Monday</th>";
@@ -158,8 +157,32 @@ function write_table_header() {
 };
 
 
-function write_table_cell($date) {
-	echo "<td>";
+function write_table_cell(&$date, &$hour, &$gwt_shifts) {
+	$db_date = date_format($date, 'Y-m-d');
+	$start_time = sprintf('%02d',$hour) . ":00:00";
+	echo "<td class=\"data\">";
+	foreach ($gwt_shifts as $date_key => $date_val) {
+		if ($date_key == $db_date) {
+			foreach ($date_val as $time_key => $time_val) {
+				if ($time_key == $start_time) {
+					foreach ($time_val as $assignment) {
+						if ($assignment['ns_desk_shortname'] == "Kennel") {
+							echo "<span class=\"shift_kn\">";
+							echo $assignment['ns_cat_uname'];
+							echo "<br />";
+							echo "</span>";
+						} elseif ($assignment['ns_desk_shortname'] == "DOGHaus") {
+							echo "<span class=\"shift_dh\">";
+							echo $assignment['ns_cat_uname'];
+							echo "<br />";
+							echo "</span>";
+						};
+					};
+				};
+			};
+		};
+	};
+
 	echo "</td>";
 };
 
