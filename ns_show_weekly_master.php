@@ -104,10 +104,13 @@ function generate_weekly_table($username, $base_date) {
 	$gwt_shifts = get_shifts_for_all($first_of_week,$last_of_week);
 
 	// Generate schedule table from that info.
+	echo "Schedule for " . date_format($first_of_week,'Y-m-d') . " to " . date_format($last_of_week,'Y-m-d');
+	echo "<br />";
+	echo "<br />";
 	write_table_header();
 
 	// Loop over each hour in the work day
-	for ($hour = 8; $hour <= 18; $hour++) {
+	for ($hour = 8; $hour <= 17; $hour++) {
 		// Loop over each day of the week being viewed
 		for ($current_date = clone($first_of_week);
 		date_diff(date_format($current_date,'Y-m-d'),date_format($last_of_week,'Y-m-d')) >= 0 ;
@@ -116,7 +119,7 @@ function generate_weekly_table($username, $base_date) {
 			// label.
 			if (date_format($current_date,'w') == 1) {
 				echo "<tr>";
-				echo "<td class=\"hour-key\">";
+				echo "<td width=\"40\">";
 				echo sprintf("%02d", $hour) . "00";
 				echo "</td>";
 			};
@@ -144,7 +147,7 @@ function generate_weekly_table($username, $base_date) {
 
 
 function write_table_header() {
-	echo "<table class=\"master-schedule-table\">";
+	echo "<table>"; 
 	echo "<tr>";
 	echo "<th></th>";
 	echo "<th>Monday</th>";
@@ -160,7 +163,7 @@ function write_table_header() {
 function write_table_cell(&$date, &$hour, &$gwt_shifts) {
 	$db_date = date_format($date, 'Y-m-d');
 	$start_time = sprintf('%02d',$hour) . ":00:00";
-	echo "<td class=\"data\">";
+	echo "<td width=\"90\">";
 	foreach ($gwt_shifts as $date_key => $date_val) {
 		if ($date_key == $db_date) {
 			foreach ($date_val as $time_key => $time_val) {
@@ -189,11 +192,18 @@ function write_table_cell(&$date, &$hour, &$gwt_shifts) {
 
 function write_table_footer() {
 	echo "</table>";
+	
+	echo "<form action=\"ns_show_weekly_master.php\" method=\"post\">";
+	echo "<input type=\"submit\" name=\"operation\" value=\"Previous Week\">";
+	echo "<input type=\"submit\" name=\"operation\" value=\"Current Week\">";
+	echo "<input type=\"submit\" name=\"operation\" value=\"Next Week\">";
+	echo "<br />";
+	echo "</form>";
+	
 	echo "<br />";
 	echo "Shift key: <br />";
 	echo "<span class=\"shift_dh\">DOGHaus</span><br />";
 	echo "<span class=\"shift_kn\">Kennel</span><br />";
-
 };
 // End of table generation functions
 ?>

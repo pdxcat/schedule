@@ -7,7 +7,6 @@ table {
 	width: auto;
 	margin-left: auto;
 	margin-right: auto;
-	background-color: #003300;
 	border-collapse: collapse;
 	border: 1px solid;
 	empty-cells: show;
@@ -15,7 +14,7 @@ table {
 
 th {
 	font-family: Arial, sans-serif;
-	font-size: 14px;
+	font-size: 1em;
 	padding: 5px;
 	text-align: center;
 	border: 1px solid;
@@ -23,7 +22,7 @@ th {
 
 td {
 	font-family: Arial, sans-serif;
-	font-size: 10px;
+	font-size: .75em;
 	border: 1px solid;
 	padding: 3px;
 }
@@ -36,28 +35,10 @@ td {
 
 #content {
 	min-height: 350px;
-	padding-top: 1em;
-	padding-bottom: 1em;
-	background-color: #000033;
 }
 
 #top-nav {
 	height: 40px;
-	background-color: #663300;
-}
-
-.master-schedule-table {
-
-}
-
-.data .master-schedule-table {
-	width: 250px;
-	font-size: 1em;
-}
-
-.hour-key .master-schedule-table {
-	text-align: center;
-	font-size: 1.25em;
 }
 
 #cal-buttons {
@@ -73,7 +54,7 @@ td {
 .cell_label {
 	text-align: left;
 	vertical-align: top;
-	font-size: 12px;
+	font-size: 1em;
 	padding: 1px;
 }
 

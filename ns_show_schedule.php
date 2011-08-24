@@ -181,7 +181,7 @@ function generate_shifts_calendar( $gct_username ) {
 
 	echo "<form action=\"ns_show_schedule.php\" method=\"post\">";
 	
-	echo "<tr valign=\"top\">";
+	echo "<tr height=\"100\">";
 	for ($cell = 1; $cell <= 42; $cell++) {	
 
 		/* 
@@ -236,7 +236,7 @@ function generate_shifts_calendar( $gct_username ) {
 function write_dated_calendar_cell(&$current_date,&$gct_shifts) {
 
 	// Writes out the date in the top left of the cell
-	echo "<td width=\"120\" height=\"100\">";
+	echo "<td>";
 	echo "<span align=\"left\" class=\"cell_label\">";
 	echo date_format($current_date, 'j');
 	echo "</span>";
@@ -284,7 +284,7 @@ function write_dated_calendar_cell(&$current_date,&$gct_shifts) {
 
 function write_blank_calendar_cell() {
 	echo "
-	<td width=\"120\" height=\"100\">
+	<td>
 	</td>";
 };
 
@@ -298,13 +298,13 @@ function write_calendar_header( &$base_date ) {
 	echo "
 		<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\">
 		<tr>
-			<th>Sunday</th>
-			<th>Monday</th>
-			<th>Tuesday</th>
-			<th>Wednesday</th>
-			<th>Thursday</th>
-			<th>Friday</th>
-			<th>Saturday</th>
+			<th width=\"14%\">Sunday</th>
+			<th width=\"14%\">Monday</th>
+			<th width=\"14%\">Tuesday</th>
+			<th width=\"14%\">Wednesday</th>
+			<th width=\"14%\">Thursday</th>
+			<th width=\"14%\">Friday</th>
+			<th width=\"14%\">Saturday</th>
 		</tr>";
 };
 
