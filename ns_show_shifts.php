@@ -35,21 +35,28 @@ if ($username) {
 
 	require('ns_common.php');
 	
-	start_db();
+	$dbh = start_db();
 
-	generate_shifts_table($username);
+	generate_shifts_table($username, $dbh);
+
+	$dbh = null;
 
 } else {
 	// login failure
 	echo "Fail.<br />";
 };
 
+?>
 
-function generate_shifts_table( $gst_username ) {
+</body>
+</html>
+
+<?php 
+function generate_shifts_table( $gst_username, &$dbh ) {
 	
 	// Fetch the cat_id for the logged in user. If we get more than one ID
 	// back something is terribly wrong in the DB.
-	$cat_id = get_cat_id($gst_username);
+	$cat_id = get_cat_id($gst_username, $dbh);
 	if (count($cat_id) > 1) {
 		die ("Username is associated with more than one ID. Please ping the scheduler.");
 	} elseif (!$cat_id) {
@@ -58,7 +65,7 @@ function generate_shifts_table( $gst_username ) {
 	};
 
 	// Get shifts
-	$shifts = get_shifts($cat_id[0]);
+	$shifts = get_shifts($cat_id[0], $dbh);
 
 	// See if we even have any records to display, if so write them out.
 	if ($shifts) {
@@ -101,5 +108,3 @@ function write_table_footer() {
 
 ?>
 
-</body>
-</html>

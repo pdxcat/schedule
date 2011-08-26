@@ -48,14 +48,16 @@ if ($username) {
 		// and display a confirmation and link back to the calendar
 		// view.
 
-		start_db();
+		$dbh = start_db();
 
 		foreach ($_SESSION['drop_shifts'] as $key => $val) {
 			$drop_shifts_ids[] = $key;
 		};
 
-		drop_shifts_by_sa_ids($drop_shifts_ids);
-
+		drop_shifts_by_sa_ids($drop_shifts_ids, $dbh);
+	
+		$dbh = null;
+	
 		echo "Shifts dropped. <br />";
 		echo "<a href=\"ns_show_schedule.php\">Back to your schedule</a><br />";
 		session_unset($_SESSION['drop_shifts']);
@@ -78,7 +80,7 @@ if ($username) {
 </html>
 
 <?php
-function discard_dropped_sa_ids($sa_ids) {
+function discard_dropped_sa_ids($sa_ids, &$dbh) {
 	/*
 	Fetch any ns_shift_dropped entries which match the provided sa_ids and
 	remove the matching sa_ids from the provided array.
@@ -91,23 +93,29 @@ function discard_dropped_sa_ids($sa_ids) {
 	which have an associated shift drop entry.
 	*/ 
 
-	$db_query = "
+	$query = "
 		SELECT d.ns_sa_id
 		FROM ns_shift_dropped as d
-		WHERE d.ns_sa_id IN ($sa_id_list)";
+		WHERE d.ns_sa_id IN (?)";
 	
-	$db_result = mysql_query($db_query);
+	$sth = $dbh->prepare($query);
+
+	$sth->bindParam(1, $sa_id_list);
+
+	$sth->execute();
+
+	$sth->setFetchMode(PDO::FETCH_ASSOC);
 
 	// If we got no matches break here.
-	if (empty($db_result)) {
+	if ($sth->rowCount() == 0) {
 		return $sa_ids;
 	}; 
 
 	// Iterate through the results and remove from the sa_ids list any ids
 	// matching the ones retrieved from the database.
-	while ($db_row = mysql_fetch_array($db_result)) {
+	while ($row = $sth->fetch()) {
 		foreach ($sa_ids as $key => $val) {
-			if ($val == $db_row[0]) {
+			if ($val == $db_row['ns_sa_id']) {
 				unset($sa_ids[$key]);
 			};
 		};
@@ -121,7 +129,7 @@ function discard_dropped_sa_ids($sa_ids) {
 };
 
 
-function drop_shifts_by_sa_ids ( &$drop_shifts ) {
+function drop_shifts_by_sa_ids (&$drop_shifts, &$dbh) {
 	/*
 	For each id in the array passed to the function, do the following:
 	-Remove sa_ids which already have an ns_shift_dropped entry from the
@@ -132,19 +140,23 @@ function drop_shifts_by_sa_ids ( &$drop_shifts ) {
 
 	// Run function to discard from the array shift assignment ids which
 	// have already been dropped. 
-	$drop_shifts = discard_dropped_sa_ids($drop_shifts);
+	$drop_shifts = discard_dropped_sa_ids($drop_shifts, $dbh);
 
 	// Insert new ns_shift_dropped entries for each of the remaining sa_ids.
+	$db_query = "
+		INSERT INTO `ns_shift_dropped` (ns_sa_id,ns_sd_droptime)
+		VALUES (?,?)";
+
+	$sth = $dbh->prepare($query);
+
 	foreach ($drop_shifts as $shift) {
 		$now = date_create();
 		$timestamp = date_format($now,"Y-m-d H:i:s");
 		
-		$db_query = "
-			INSERT INTO `ns_shift_dropped` (ns_sa_id,ns_sd_droptime)
-			VALUES ($shift,'$timestamp')";
+		$sth->bindParam(1,$shift);
+		$sth->bindParam(2,$timestamp);
 
-		mysql_query($db_query);
+		$sth->execute();
 	};
 };
 ?>
-

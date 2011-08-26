@@ -5,10 +5,13 @@ function start_db() {
 	// Uses an include file with some special permissions on it.
         require('db.inc');
         $db_database = "schedule";
-        $db_connection = mysql_connect($db_host,$db_user,$db_password)
-                or die ("Could not connect to database: " . mysql_error());
-        $db_selected = mysql_select_db($db_database)
-                or die ("Could not select the database: " . mysql_error());
+	try {
+		$dbh = new PDO("mysql:host=$db_host;dbname=$db_database",$db_user,$db_password);
+	} catch (PDOException $e) {
+		echo $e->getMessage();
+	};
+	
+	return $dbh;
 };
 
 
@@ -22,7 +25,7 @@ function check_session() {
 };
 
 
-function get_shifts( $gs_id ) {
+function get_shifts( $gs_id, &$dbh ) {
         /* 
 	Returns an array of shifts for the cat in question with the format:
         	$return_array[
@@ -50,11 +53,11 @@ function get_shifts( $gs_id ) {
 	Resolves the desk id in the shift assignment to the short name for the
 	desk from the desks table.
 	*/
-        $db_query = "
+        $query = "
 		SELECT a.ns_sa_id, s.ns_shift_date, d.ns_desk_shortname, s.ns_shift_start_time, s.ns_shift_end_time
 		FROM ns_shift_assigned as a, ns_shift as s, ns_desk as d
-		WHERE s.ns_shift_date >= '$today'
-		AND a.ns_cat_id = '$gs_id'
+		WHERE s.ns_shift_date >= ?
+		AND a.ns_cat_id = ?
 		AND a.ns_shift_id = s.ns_shift_id
 		AND a.ns_desk_id = d.ns_desk_id
 		AND a.ns_sa_id NOT IN (
@@ -62,20 +65,29 @@ function get_shifts( $gs_id ) {
 			FROM ns_shift_dropped)
 		ORDER BY ns_shift_date, ns_shift_start_time";
 
-        $db_result = mysql_query($db_query);
+	$sth = $dbh->prepare($query);
 
+	$sth->bindParam(1, $today);
+	$sth->bindParam(2, $gs_id);
+
+	$sth->execute();
+
+	$sth->setFetchMode(PDO::FETCH_ASSOC);
+	
 	// Dump all the fetched data into a 2 dimensional array and return it.
         $shifts = array();
-        while ($db_row = mysql_fetch_array($db_result)) {
-                $shifts[] = array('ns_sa_id' => $db_row[0], 'ns_shift_date' => $db_row[1],
-                        'ns_desk_shortname' => $db_row[2], 'ns_shift_start_time' => $db_row[3],
-                        'ns_shift_end_time' => $db_row[4]);
+        while ($row = $sth->fetch()) {
+                $shifts[] = array('ns_sa_id' => $row['ns_sa_id'],
+			'ns_shift_date' => $row['ns_shift_date'],
+                        'ns_desk_shortname' => $row['ns_desk_shortname'], 
+			'ns_shift_start_time' => $row['ns_shift_start_time'],
+                        'ns_shift_end_time' => $row['ns_shift_end_time']);
         };
 
         return $shifts;
 };
 
-function get_shifts_for_all( &$start_date, &$end_date ) {
+function get_shifts_for_all( &$start_date, &$end_date, &$dbh ) {
 	/*
 	Function to fetch all active assignments in a specified date range.
 	This is used to populate the weekly schedule displays which show when
@@ -92,11 +104,11 @@ function get_shifts_for_all( &$start_date, &$end_date ) {
 	$gsfa_start_date = date_format($start_date, 'Y-m-d');
 	$gsfa_end_date = date_format($end_date, 'Y-m-d');
 
-        $db_query = "
+        $query = "
 		SELECT s.ns_shift_date, s.ns_shift_start_time, c.ns_cat_uname, d.ns_desk_shortname
 		FROM ns_shift as s, ns_shift_assigned as a, ns_desk as d, ns_cat as c
-		WHERE s.ns_shift_date >= '$gsfa_start_date' 
-		AND s.ns_shift_date <= '$gsfa_end_date'
+		WHERE s.ns_shift_date >= ? 
+		AND s.ns_shift_date <= ?
 		AND a.ns_cat_id = c.ns_cat_id
 		AND a.ns_desk_id = d.ns_desk_id
 		AND a.ns_shift_id = s.ns_shift_id
@@ -105,22 +117,29 @@ function get_shifts_for_all( &$start_date, &$end_date ) {
 			FROM ns_shift_dropped)
 		ORDER BY d.ns_desk_shortname,s.ns_shift_date,s.ns_shift_start_time,c.ns_cat_uname
 		";
+	
+	$sth = $dbh->prepare($query);
+	
+	$sth->bindParam(1, $gsfa_start_date);
+	$sth->bindParam(2, $gsfa_end_date);
 
-        $db_result = mysql_query($db_query);
+	$sth->execute();
+
+	$sth->setFetchMode(PDO::FETCH_ASSOC);
 
 	// Dump all the fetched data into a 2 dimensional array and return it.
         $shifts = array();
-        while ($db_row = mysql_fetch_array($db_result)) {
-                $shifts[$db_row[0]][$db_row[1]][] = array(
-			'ns_cat_uname' => $db_row[2],
-			'ns_desk_shortname' => $db_row[3]);
+        while ($row = $sth->fetch()) {
+                $shifts[$row['ns_shift_date']][$row['ns_shift_start_time']][] = array(
+			'ns_cat_uname' => $row['ns_cat_uname'],
+			'ns_desk_shortname' => $row['ns_desk_shortname']);
         };
 
         return $shifts;
 }; 
 
 
-function get_shifts_to_pickup( $gsp_id ) {
+function get_shifts_to_pickup( $gsp_id, &$dbh ) {
         /* 
 	Function to get the shift information for display on the calendar view
 	page used for selection of shifts to pick up.
@@ -159,18 +178,18 @@ function get_shifts_to_pickup( $gsp_id ) {
 	Resolves the desk id in the shift assignment to the short name for the
 	desk from the desks table.
 	*/
-        $db_query = "
+        $query = "
 		SELECT sd.ns_sd_id, de.ns_desk_shortname, s.ns_shift_date, s.ns_shift_start_time, s.ns_shift_end_time
 		FROM ns_shift as s, ns_desk as de, ns_shift_assigned as sa, ns_shift_dropped as sd
 		WHERE sd.ns_sa_id = sa.ns_sa_id
 		AND sa.ns_shift_id = s.ns_shift_id
 		AND sa.ns_desk_id = de.ns_desk_id
-		AND s.ns_shift_date >= '$today'
+		AND s.ns_shift_date >= ?
 		AND s.ns_shift_id NOT IN (
 			SELECT s.ns_shift_id
 			FROM ns_shift as s, ns_shift_assigned as sa
 			WHERE sa.ns_shift_id = s.ns_shift_id
-			AND sa.ns_cat_id = '$gsp_id'
+			AND sa.ns_cat_id = ?
 			AND sa.ns_sa_id NOT IN (
 				SELECT ns_sa_id
 				FROM ns_shift_dropped))
@@ -178,25 +197,32 @@ function get_shifts_to_pickup( $gsp_id ) {
 			SELECT ns_sd_id
 			FROM ns_shift_picked_up)
 		GROUP BY s.ns_shift_id, sa.ns_desk_id";
+	
+	$sth = $dbh->prepare($query);
+	
+	$sth->bindParam(1, $today);
+	$sth->bindParam(2, $gsp_id);
+	
+	$sth->execute();
 
-        $db_result = mysql_query($db_query);
+	$sth->setFetchMode(PDO::FETCH_ASSOC);
 
 	// Dump all the fetched data into a 2 dimensional array and return it.
         $shifts = array();
-        while ($db_row = mysql_fetch_array($db_result)) {
+        while ($row = $sth->fetch()) {
                 $shifts[] = array(
-			'ns_sd_id' => $db_row[0], 
-			'ns_desk_shortname' => $db_row[1], 	
-			'ns_shift_date' => $db_row[2], 
-			'ns_shift_start_time' => $db_row[3], 
-			'ns_shift_end_time' => $db_row[4]);
+			'ns_sd_id' => $row['ns_sd_id'], 
+			'ns_desk_shortname' => $row['ns_desk_shortname'], 	
+			'ns_shift_date' => $row['ns_shift_date'], 
+			'ns_shift_start_time' => $row['ns_shift_start_time'], 
+			'ns_shift_end_time' => $row['ns_shift_end_time']);
         };
 
         return $shifts;
 };
 
 
-function get_shifts_from_sa_ids( $sa_ids ) {
+function get_shifts_from_sa_ids( $sa_ids, &$dbh ) {
 	/*
 	Returns an array of shifts associated with assignments by id in the
 	format:
@@ -215,9 +241,9 @@ function get_shifts_from_sa_ids( $sa_ids ) {
         $today = date("Y-m-d");
 
 	// Build list of shift IDs
-	$sa_id_list = "'";	
+	$sa_id_list = "('";	
 	$sa_id_list .= implode("','",$sa_ids);
-	$sa_id_list .= "'";
+	$sa_id_list .= "')";
 
 	/*
 	Set up and run query for getting shift entries.
@@ -232,26 +258,40 @@ function get_shifts_from_sa_ids( $sa_ids ) {
 	desk from the desks table.
 	*/
 
-        $db_query = "
+	$placeholders = "(?,";
+	
+
+        $query = "
 		SELECT a.ns_sa_id, s.ns_shift_date, d.ns_desk_shortname, s.ns_shift_start_time, s.ns_shift_end_time
 		FROM ns_shift_assigned as a, ns_shift as s, ns_desk as d
-		WHERE s.ns_shift_date >= '$today'
-		AND a.ns_sa_id IN ($sa_id_list)
+		WHERE s.ns_shift_date >= ?
+		AND a.ns_sa_id IN $placeholders
 		AND a.ns_shift_id = s.ns_shift_id
 		AND a.ns_desk_id = d.ns_desk_id
 		AND a.ns_sa_id NOT IN (
-		SELECT ns_sa_id
-		FROM ns_shift_dropped)
+			SELECT ns_sa_id
+			FROM ns_shift_dropped)
 		ORDER BY ns_shift_date, ns_shift_start_time";
 
-        $db_result = mysql_query($db_query);
+	$sth = $dbh->prepare($query);
+	
+	$sth->bindParam(1,$today);
+	$sth->bindParam(2,$sa_id_list);
 
+	$sth->debugDumpParams();
+	
+	$sth->execute();
+
+	$sth->setFetchMode(PDO::FETCH_ASSOC);
+	
 	// Dump all the fetched data into a 2 dimensional array and return it.
         $shifts = array();
-        while ($db_row = mysql_fetch_array($db_result)) {
-                $shifts[] = array('ns_sa_id' => $db_row[0], 'ns_shift_date' => $db_row[1],
-                        'ns_desk_shortname' => $db_row[2], 'ns_shift_start_time' => $db_row[3],
-                        'ns_shift_end_time' => $db_row[4]);
+        while ($row = $sth->fetch()) {
+                $shifts[] = array('ns_sa_id' => $row['ns_sa_id'], 
+			'ns_shift_date' => $row['ns_shift_date'],
+                        'ns_desk_shortname' => $row['ns_desk_shortname'], 
+			'ns_shift_start_time' => $row['ns_shift_start_time'],
+                        'ns_shift_end_time' => $row['ns_shift_end_time']);
         };
 
         return $shifts;
@@ -259,7 +299,7 @@ function get_shifts_from_sa_ids( $sa_ids ) {
 };
 
 
-function get_shifts_from_sd_ids( $sd_ids ) {
+function get_shifts_from_sd_ids( $sd_ids, &$dbh ) {
 	/*
 	Returns an array of shifts associated with drops by id in the
 	format:
@@ -295,11 +335,11 @@ function get_shifts_from_sd_ids( $sd_ids ) {
 	desk from the desks table.
 	*/
 
-        $db_query = "
+        $query = "
 		SELECT sd.ns_sd_id, s.ns_shift_date, de.ns_desk_shortname, s.ns_shift_start_time, s.ns_shift_end_time
 		FROM ns_shift_dropped as sd, ns_shift as s, ns_desk as de, ns_shift_assigned as sa
-		WHERE s.ns_shift_date >= '$today'
-		AND sd.ns_sd_id IN ($sd_id_list)
+		WHERE s.ns_shift_date >= '?'
+		AND sd.ns_sd_id IN (?)
 		AND sa.ns_shift_id = s.ns_shift_id
 		AND sd.ns_sa_id = sa.ns_sa_id
 		AND sa.ns_desk_id = de.ns_desk_id
@@ -307,17 +347,25 @@ function get_shifts_from_sd_ids( $sd_ids ) {
 			SELECT ns_sd_id
 			FROM ns_shift_picked_up)
 		ORDER BY ns_shift_date, ns_shift_start_time";
-        $db_result = mysql_query($db_query);
+
+	$sth = $dbh->prepare($query);
+
+	$sth->bindParam(1,$today);
+	$sth->bindParam(2,$sd_id_list);
+
+	$sth->execute();
+
+	$sth->setFetchMode(PDO::FETCH_ASSOC);
 
 	// Dump all the fetched data into a 2 dimensional array and return it.
         $shifts = array();
-        while ($db_row = mysql_fetch_array($db_result)) {
+        while ($row = $sth->fetch()) {
                 $shifts[] = array(
-			'ns_sd_id' => $db_row[0], 
-			'ns_shift_date' => $db_row[1],
-                        'ns_desk_shortname' => $db_row[2], 
-			'ns_shift_start_time' => $db_row[3],
-                        'ns_shift_end_time' => $db_row[4]);
+			'ns_sd_id' => $row['ns_sd_id'], 
+			'ns_shift_date' => $row['ns_shift_date'],
+                        'ns_desk_shortname' => $row['ns_desk_shortname'], 
+			'ns_shift_start_time' => $row['ns_shift_start_time'],
+                        'ns_shift_end_time' => $row['ns_shift_end_time']);
         };
 
         return $shifts;
@@ -325,22 +373,28 @@ function get_shifts_from_sd_ids( $sd_ids ) {
 };
 
 
-function get_cat_id( $gci_uname ) {
+function get_cat_id( $gci_uname, &$dbh ) {
 	// Retrieve schedule DB ID numbers for the given username. Returns an
 	// array of all matching IDs.
 
         // Set up and run the query to grab all ID numbers for the given CAT username
-        $db_query = "
+        $query = "
                 SELECT ns_cat_id
                 FROM ns_cat
-                WHERE ns_cat_uname = '$gci_uname'";
-        $db_result = mysql_query($db_query);
+                WHERE ns_cat_uname = ?";
+	
+	$sth = $dbh->prepare($query);
 
-        // Dump all the fetched IDs into an array and return it.
-        $ids = array();
-        while ($db_row = mysql_fetch_array($db_result)) {
-                $ids[] = $db_row[0];
-        };
+	$sth->bindParam(1, $gci_uname);
+
+	$sth->execute();
+	
+	$sth->setFetchMode(PDO::FETCH_ASSOC);	
+
+	$ids = array();
+        while ($row = $sth->fetch()) {
+		$ids[] = $row['ns_cat_id'];
+	};
 
         return $ids;
 };

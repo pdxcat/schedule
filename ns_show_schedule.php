@@ -35,7 +35,7 @@ if ($username) {
 	// do stuff for the currently logged in user
 	printf("Logged in as %s. <br /> <br />", $username);
 
-	start_db();	
+	$dbh = start_db();	
 
 	if ($_POST['operation'] == "Drop Selected Shifts") {
 		/*
@@ -55,8 +55,7 @@ if ($username) {
 			foreach ($_SESSION['drop_shifts'] as $key => $val) {
 				$drop_shifts_ids[] = $key;
 			};
-
-			generate_shifts_table($drop_shifts_ids);
+			generate_shifts_table($drop_shifts_ids, $dbh);
 
 			echo "<form action=\"ns_show_schedule.php\" method=\"post\">";
 			echo "<input type=\"submit\" name=\"operation\" value=\"Abort\">";
@@ -68,7 +67,7 @@ if ($username) {
 		} else {
 			echo "No shifts were selected to drop.<br />";
 
-			generate_shifts_calendar($username);
+			generate_shifts_calendar($username, $dbh);
 		};
 
 	} elseif ($_POST['operation'] == "Abort") {
@@ -79,22 +78,24 @@ if ($username) {
 		echo "Shift drop cancelled, shift selections have been cleared.<br />";
 		session_unset($_SESSION['drop_shifts']);
 
-		generate_shifts_calendar($username);
+		generate_shifts_calendar($username, $dbh);
 
 	} elseif (empty($_POST['operation'])) {
 		// Clear selections if we got here without having clicked one
 		// of the form buttons.
 		session_unset($_SESSION['drop_shifts']);
 		
-		generate_shifts_calendar($username);
+		generate_shifts_calendar($username, $dbh);
 
 	} else {
 		update_session_shifts();
 
 		// Any other POST operation will be processed within the
 		// calendar generation function.
-		generate_shifts_calendar($username);
+		generate_shifts_calendar($username, $dbh);
 	};
+	
+	$dbh = null;
 
 } else {
 	// login failure
@@ -110,7 +111,7 @@ if ($username) {
 
 <?php
 // Functions to generate a calendar of shifts.
-function generate_shifts_calendar( $gct_username ) {
+function generate_shifts_calendar( $gct_username, &$dbh ) {
 	/*
 	If the user has been viewing the calendar in the current session, but
 	has left the calendar page at some point, we want to take them back to
@@ -172,8 +173,8 @@ function generate_shifts_calendar( $gct_username ) {
 	// logged in user's id in the schedule database, follow it up by 
 	// sucking up all of the assigned shifts for this user. 
 	start_db();
-	$gct_cat_id = get_cat_id($gct_username);
-	$gct_shifts = get_shifts($gct_cat_id[0]);
+	$gct_cat_id = get_cat_id($gct_username, $dbh);
+	$gct_shifts = get_shifts($gct_cat_id[0], $dbh);
 	
 	// Start actually assembling the calendar table into which all of this
 	// shift data is outputted.
@@ -181,7 +182,7 @@ function generate_shifts_calendar( $gct_username ) {
 
 	echo "<form action=\"ns_show_schedule.php\" method=\"post\">";
 	
-	echo "<tr height=\"100\">";
+	echo "<tr>";
 	for ($cell = 1; $cell <= 42; $cell++) {	
 
 		/* 
@@ -331,10 +332,10 @@ function write_calendar_footer( &$base_date ) {
 
 
 // Functions used in the generation of a table of shifts.
-function generate_shifts_table( $drop_shifts ) {
+function generate_shifts_table( $drop_shifts, &$dbh ) {
 	
 	// Get shifts
-	$shifts = get_shifts_from_sa_ids($drop_shifts);
+	$shifts = get_shifts_from_sa_ids($drop_shifts, $dbh);
 
 	// See if we even have any records to display, if so write them out.
 	if ($shifts) {

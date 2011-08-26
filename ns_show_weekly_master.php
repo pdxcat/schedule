@@ -65,7 +65,11 @@ if ($username) {
 	// viewed date in SESSION parameters.
 	$_SESSION['last_viewed_date'] = date_format($base_date, 'Y-m-d');
 	
-	generate_weekly_table($username, $base_date);
+	$dbh = start_db();
+	
+	generate_weekly_table($username, $base_date, $dbh);
+
+	$dbh = null;
 
 } else {
 	// login failure
@@ -82,7 +86,7 @@ if ($username) {
 <?php
 
 // Table generation functions
-function generate_weekly_table($username, $base_date) {
+function generate_weekly_table($username, $base_date, &$dbh) {
 	// Determine first and last days of the week.
 	$first_of_week = clone($base_date);
 	if (date_format($first_of_week, 'w') > 1) {
@@ -100,8 +104,7 @@ function generate_weekly_table($username, $base_date) {
 	date_modify($last_of_week, '+5 days');
 
 	// Fetch all active shift assignments and shift info between those dates.
-	start_db();
-	$gwt_shifts = get_shifts_for_all($first_of_week,$last_of_week);
+	$gwt_shifts = get_shifts_for_all($first_of_week,$last_of_week,$dbh);
 
 	// Generate schedule table from that info.
 	echo "Schedule for " . date_format($first_of_week,'Y-m-d') . " to " . date_format($last_of_week,'Y-m-d');
