@@ -93,14 +93,17 @@ function discard_dropped_sa_ids($sa_ids, &$dbh) {
 	which have an associated shift drop entry.
 	*/ 
 
+	$token_str = make_token_string($sa_ids);
+
 	$query = "
 		SELECT d.ns_sa_id
 		FROM ns_shift_dropped as d
-		WHERE d.ns_sa_id IN (?)";
+		WHERE d.ns_sa_id IN ($token_str)";
 	
 	$sth = $dbh->prepare($query);
 
-	$sth->bindParam(1, $sa_id_list);
+	// Binds the items in the array to the tokens in the query.
+	bind_id_list($sa_ids, $sth);
 
 	$sth->execute();
 
@@ -141,11 +144,11 @@ function drop_shifts_by_sa_ids (&$drop_shifts, &$dbh) {
 	// Run function to discard from the array shift assignment ids which
 	// have already been dropped. 
 	$drop_shifts = discard_dropped_sa_ids($drop_shifts, $dbh);
-
+	
 	// Insert new ns_shift_dropped entries for each of the remaining sa_ids.
-	$db_query = "
+	$query = "
 		INSERT INTO `ns_shift_dropped` (ns_sa_id,ns_sd_droptime)
-		VALUES (?,?)";
+		VALUES (:sa_id, :timestamp)";
 
 	$sth = $dbh->prepare($query);
 
@@ -153,8 +156,8 @@ function drop_shifts_by_sa_ids (&$drop_shifts, &$dbh) {
 		$now = date_create();
 		$timestamp = date_format($now,"Y-m-d H:i:s");
 		
-		$sth->bindParam(1,$shift);
-		$sth->bindParam(2,$timestamp);
+		$sth->bindParam(':sa_id',$shift);
+		$sth->bindParam(':timestamp',$timestamp);
 
 		$sth->execute();
 	};

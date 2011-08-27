@@ -25,6 +25,34 @@ function check_session() {
 };
 
 
+function make_token_string (&$id_list) {
+	// Generates a token string for using lists of id numbers in parameter
+	// bound SQL queries. Output format is:
+	//	[id0,id1,..,idn]
+	// Input should be an array of id numbers.
+	
+	$token_str = "";
+	$max = (count($id_list) - 1);
+	for ($i = 0; $i <= $max; $i++) {
+		$token_str .= sprintf(":id%d",$i);
+		if ($i != $max) {
+			$token_str .= ", ";
+		}; 	
+	};
+
+	return $token_str;
+};
+
+
+function bind_id_list (&$id_list, &$sth) {
+	$max = (count($id_list) - 1);
+	for ($i = 0; $i <= $max; $i++) {
+		$token = sprintf(":id%d",$i);
+		$sth->bindValue($token,$id_list[$i]);
+	};
+};
+
+
 function get_shifts( $gs_id, &$dbh ) {
         /* 
 	Returns an array of shifts for the cat in question with the format:
@@ -240,11 +268,6 @@ function get_shifts_from_sa_ids( $sa_ids, &$dbh ) {
 	*/
         $today = date("Y-m-d");
 
-	// Build list of shift IDs
-	$sa_id_list = "('";	
-	$sa_id_list .= implode("','",$sa_ids);
-	$sa_id_list .= "')";
-
 	/*
 	Set up and run query for getting shift entries.
 
@@ -258,14 +281,17 @@ function get_shifts_from_sa_ids( $sa_ids, &$dbh ) {
 	desk from the desks table.
 	*/
 
-	$placeholders = "(?,";
-	
+	// Build the token string for our query. PDO doesn't support using a 
+	// comma separated list as a bound parameter so the query must be
+	// built dynamically based on how many IDs need to be matched against.
+
+	$token_str = make_token_string($sa_ids);
 
         $query = "
 		SELECT a.ns_sa_id, s.ns_shift_date, d.ns_desk_shortname, s.ns_shift_start_time, s.ns_shift_end_time
 		FROM ns_shift_assigned as a, ns_shift as s, ns_desk as d
-		WHERE s.ns_shift_date >= ?
-		AND a.ns_sa_id IN $placeholders
+		WHERE s.ns_shift_date >= :today
+		AND a.ns_sa_id IN ($token_str)
 		AND a.ns_shift_id = s.ns_shift_id
 		AND a.ns_desk_id = d.ns_desk_id
 		AND a.ns_sa_id NOT IN (
@@ -274,11 +300,11 @@ function get_shifts_from_sa_ids( $sa_ids, &$dbh ) {
 		ORDER BY ns_shift_date, ns_shift_start_time";
 
 	$sth = $dbh->prepare($query);
-	
-	$sth->bindParam(1,$today);
-	$sth->bindParam(2,$sa_id_list);
 
-	$sth->debugDumpParams();
+	$sth->bindParam(':today',$today);
+	
+	// Binds the items in the array to the tokens in the query.
+	bind_id_list($sa_ids, $sth);
 	
 	$sth->execute();
 
@@ -295,7 +321,6 @@ function get_shifts_from_sa_ids( $sa_ids, &$dbh ) {
         };
 
         return $shifts;
-
 };
 
 
@@ -317,11 +342,6 @@ function get_shifts_from_sd_ids( $sd_ids, &$dbh ) {
 	*/
         $today = date("Y-m-d");
 
-	// Build list of shift IDs
-	$sd_id_list = "'";	
-	$sd_id_list .= implode("','",$sd_ids);
-	$sd_id_list .= "'";
-
 	/*
 	Set up and run query for getting shift entries.
 
@@ -335,11 +355,13 @@ function get_shifts_from_sd_ids( $sd_ids, &$dbh ) {
 	desk from the desks table.
 	*/
 
+	$token_str = make_token_string($sd_ids);
+
         $query = "
 		SELECT sd.ns_sd_id, s.ns_shift_date, de.ns_desk_shortname, s.ns_shift_start_time, s.ns_shift_end_time
 		FROM ns_shift_dropped as sd, ns_shift as s, ns_desk as de, ns_shift_assigned as sa
-		WHERE s.ns_shift_date >= '?'
-		AND sd.ns_sd_id IN (?)
+		WHERE s.ns_shift_date >= :today
+		AND sd.ns_sd_id IN ($token_str)
 		AND sa.ns_shift_id = s.ns_shift_id
 		AND sd.ns_sa_id = sa.ns_sa_id
 		AND sa.ns_desk_id = de.ns_desk_id
@@ -350,9 +372,10 @@ function get_shifts_from_sd_ids( $sd_ids, &$dbh ) {
 
 	$sth = $dbh->prepare($query);
 
-	$sth->bindParam(1,$today);
-	$sth->bindParam(2,$sd_id_list);
+	$sth->bindParam(':today',$today);
 
+	bind_id_list($sd_ids, $sth);
+	
 	$sth->execute();
 
 	$sth->setFetchMode(PDO::FETCH_ASSOC);
