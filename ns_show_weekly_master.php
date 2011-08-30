@@ -15,7 +15,6 @@ $username = $_SESSION['username'];
 echo "<title>The Schedule ($username)</title>";
 ?>
 
-<link rel="stylesheet" type="text/css" href="master.css" media="screen" />
 <link rel="stylesheet" type="text/css" href="ns_general.css" media="screen" />
 
 </head>
@@ -122,7 +121,7 @@ function generate_weekly_table($username, $base_date, &$dbh) {
 			// label.
 			if (date_format($current_date,'w') == 1) {
 				echo "<tr>";
-				echo "<td width=\"40\">";
+				echo "<td>";
 				echo sprintf("%02d", $hour) . "00";
 				echo "</td>";
 			};
@@ -150,15 +149,15 @@ function generate_weekly_table($username, $base_date, &$dbh) {
 
 
 function write_table_header() {
-	echo "<table>"; 
+	echo "<table class=\"shift_weekly\">"; 
 	echo "<tr>";
-	echo "<th></th>";
-	echo "<th>Monday</th>";
-	echo "<th>Tuesday</th>";
-	echo "<th>Wednesday</th>";
-	echo "<th>Thursday</th>";
-	echo "<th>Friday</th>";
-	echo "<th>Saturday</th>";
+	echo "<th class=\"hour_label\"></th>";
+	echo "<th class=\"day_label\">Monday</th>";
+	echo "<th class=\"day_label\">Tuesday</th>";
+	echo "<th class=\"day_label\">Wednesday</th>";
+	echo "<th class=\"day_label\">Thursday</th>";
+	echo "<th class=\"day_label\">Friday</th>";
+	echo "<th class=\"day_label\">Saturday</th>";
 	echo "</tr>";
 };
 
@@ -166,7 +165,7 @@ function write_table_header() {
 function write_table_cell(&$date, &$hour, &$gwt_shifts) {
 	$db_date = date_format($date, 'Y-m-d');
 	$start_time = sprintf('%02d',$hour) . ":00:00";
-	echo "<td width=\"90\">";
+	echo "<td>";
 	foreach ($gwt_shifts as $date_key => $date_val) {
 		if ($date_key == $db_date) {
 			foreach ($date_val as $time_key => $time_val) {
@@ -196,12 +195,14 @@ function write_table_cell(&$date, &$hour, &$gwt_shifts) {
 function write_table_footer() {
 	echo "</table>";
 	
+	echo "<div id=\"cal_buttons\"\n";	
 	echo "<form action=\"ns_show_weekly_master.php\" method=\"post\">";
 	echo "<input type=\"submit\" name=\"operation\" value=\"Previous Week\">";
 	echo "<input type=\"submit\" name=\"operation\" value=\"Current Week\">";
 	echo "<input type=\"submit\" name=\"operation\" value=\"Next Week\">";
 	echo "<br />";
 	echo "</form>";
+	echo "</div>\n";
 	
 	echo "<br />";
 	echo "Shift key: <br />";

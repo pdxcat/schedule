@@ -37,6 +37,14 @@ if ($username) {
 
 	$dbh = start_db();	
 
+	// Verify that the logged in user has a valid schedule database entry,
+	// if not abort.
+	$cat_id = get_cat_id($username, $dbh);
+	if (!$cat_id) {
+		echo "You don't seem to be active in the schedule database. If you believe this is an error please contact the scheduler.<br />\n";
+		exit;
+	};
+
 	if ($_POST['operation'] == "Drop Selected Shifts") {
 		/*
 		If the user has clicked the drop shifts button, check if there
@@ -67,7 +75,7 @@ if ($username) {
 		} else {
 			echo "No shifts were selected to drop.<br />";
 
-			generate_shifts_calendar($username, $dbh);
+			generate_shifts_calendar($username, $cat_id, $dbh);
 		};
 
 	} elseif ($_POST['operation'] == "Abort") {
@@ -78,21 +86,21 @@ if ($username) {
 		echo "Shift drop cancelled, shift selections have been cleared.<br />";
 		session_unset($_SESSION['drop_shifts']);
 
-		generate_shifts_calendar($username, $dbh);
+		generate_shifts_calendar($username, $cat_id, $dbh);
 
 	} elseif (empty($_POST['operation'])) {
 		// Clear selections if we got here without having clicked one
 		// of the form buttons.
 		session_unset($_SESSION['drop_shifts']);
 		
-		generate_shifts_calendar($username, $dbh);
+		generate_shifts_calendar($username, $cat_id, $dbh);
 
 	} else {
 		update_session_shifts();
 
 		// Any other POST operation will be processed within the
 		// calendar generation function.
-		generate_shifts_calendar($username, $dbh);
+		generate_shifts_calendar($username, $cat_id, $dbh);
 	};
 	
 	$dbh = null;
@@ -111,7 +119,7 @@ if ($username) {
 
 <?php
 // Functions to generate a calendar of shifts.
-function generate_shifts_calendar( $gct_username, &$dbh ) {
+function generate_shifts_calendar( $gct_username, $cat_id, &$dbh ) {
 	/*
 	If the user has been viewing the calendar in the current session, but
 	has left the calendar page at some point, we want to take them back to
@@ -173,8 +181,19 @@ function generate_shifts_calendar( $gct_username, &$dbh ) {
 	// logged in user's id in the schedule database, follow it up by 
 	// sucking up all of the assigned shifts for this user. 
 	start_db();
-	$gct_cat_id = get_cat_id($gct_username, $dbh);
-	$gct_shifts = get_shifts($gct_cat_id[0], $dbh);
+	$gct_shifts = get_shifts($cat_id[0], $dbh);
+
+	// Format start and end times in hhmm format
+	foreach ($gct_shifts as &$shift) {
+		foreach ($shift as $key => &$value) {
+			if ($key == 'ns_shift_start_time' || $key == 'ns_shift_end_time') {
+				preg_match('/^(\d{2}):(\d{2}):(\d{2})/',$value,$chunks);
+				$value = $chunks[1] . $chunks[2];
+			};	
+		};
+	};
+
+	unset($value);
 	
 	// Start actually assembling the calendar table into which all of this
 	// shift data is outputted.
@@ -204,7 +223,7 @@ function generate_shifts_calendar( $gct_username, &$dbh ) {
 				
 				// Start a new row every seven cells.
 				if ($cell % 7 == 0 && $cell < 42) {
-					echo "</tr>\n<tr valign=\"top\">";
+					echo "</tr>\n<tr>";
 				};
 
 				$cell++;
@@ -224,7 +243,7 @@ function generate_shifts_calendar( $gct_username, &$dbh ) {
 		
 		// Start a new row every seven cells.
 		if ($cell % 7 == 0 && $cell < 42) {
-			echo "</tr>\n<tr valign=\"top\">";
+			echo "</tr>\n<tr>";
 		};
 	}; 
 	echo "</tr>";
@@ -237,15 +256,16 @@ function generate_shifts_calendar( $gct_username, &$dbh ) {
 function write_dated_calendar_cell(&$current_date,&$gct_shifts) {
 
 	// Writes out the date in the top left of the cell
-	echo "<td>";
-	echo "<span align=\"left\" class=\"cell_label\">";
-	echo date_format($current_date, 'j');
-	echo "</span>";
+	echo "<td>\n";
+	echo "<span class=\"cell_label\">\n";
+	echo date_format($current_date, 'j') . "\n";
+	echo "<br />\n";
+	echo "</span>\n";
 
 	// Writes out shift start and end times
-	echo "<div class=\"shifts\">";
 	foreach ($gct_shifts as $shift) {
 		if ($shift['ns_shift_date'] == date_format($current_date,'Y-m-d')) {
+			echo "<span class=\"cell_content\">\n";
 			// Use the state of the shift from the SESSION params,
 			// if it's been set.
 			if ($_SESSION['drop_shifts'][$shift['ns_sa_id']] == 1) {
@@ -274,11 +294,11 @@ function write_dated_calendar_cell(&$current_date,&$gct_shifts) {
 				echo "<br />";
 				echo "</span>";
 			};
+			echo "</span>\n";
 		};
 	};
-	echo "</div>";
 	
-	echo "</td>";
+	echo "</td>\n";
 
 };
 
@@ -297,15 +317,15 @@ function write_calendar_header( &$base_date ) {
 	. "</div><br />";
 	
 	echo "
-		<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\">
+		<table class=\"shift_calendar\">
 		<tr>
-			<th width=\"14%\">Sunday</th>
-			<th width=\"14%\">Monday</th>
-			<th width=\"14%\">Tuesday</th>
-			<th width=\"14%\">Wednesday</th>
-			<th width=\"14%\">Thursday</th>
-			<th width=\"14%\">Friday</th>
-			<th width=\"14%\">Saturday</th>
+			<th>Sunday</th>
+			<th>Monday</th>
+			<th>Tuesday</th>
+			<th>Wednesday</th>
+			<th>Thursday</th>
+			<th>Friday</th>
+			<th>Saturday</th>
 		</tr>";
 };
 
@@ -313,7 +333,7 @@ function write_calendar_header( &$base_date ) {
 function write_calendar_footer( &$base_date ) {
 	echo "</table>";
 	
-	echo "<div id=\"cal-buttons\">";
+	echo "<div id=\"cal_buttons\">";
 	echo "<input type=\"submit\" name=\"operation\" value=\"Previous Month\">";
 	echo "<input type=\"submit\" name=\"operation\" value=\"Current Month\">";
 	echo "<input type=\"submit\" name=\"operation\" value=\"Next Month\">";
@@ -336,6 +356,7 @@ function generate_shifts_table( $drop_shifts, &$dbh ) {
 	
 	// Get shifts
 	$shifts = get_shifts_from_sa_ids($drop_shifts, $dbh);
+
 
 	// See if we even have any records to display, if so write them out.
 	if ($shifts) {
@@ -362,7 +383,7 @@ function write_table_cell( $ws_shift ) {
 
 function write_table_header() {
 	echo "
-		<table border=\"1\" cellpadding=\"1\" cellspacing=\"1\">\n
+		<table class=\"shift_list\">\n
 		<tr>\n
 			<th>Date</th>\n
 			<th>Desk</th>\n

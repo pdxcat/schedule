@@ -15,7 +15,6 @@ $username = $_SESSION['username'];
 echo "<title>The Schedule ($username)</title>";
 ?>
 
-<link rel="stylesheet" type="text/css" href="master.css" media="screen" />
 <link rel="stylesheet" type="text/css" href="ns_general.css" media="screen" />
 
 </head>
