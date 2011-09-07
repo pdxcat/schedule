@@ -34,13 +34,31 @@ if(@ARGV == 3){
 };
 
 #Get anduril logs
-foreach (`ssh -q schedule\@anduril.cat.pdx.edu \'last tty console| grep \"$date\"\'`){
-  /^(.+?)\s+.+?\s+.+?\s+.+?\s+.+?\s+.+?\s+(.+?)\s+.+?\s+(.+?)\s+(.+)/;
-  if($3 eq "logged"){
-    push @strays, "$1 $2 $3 anduril";
-  }elsif ($4 ne "(00:00)"){
-   push @logs, "$1 $2 $3 anduril";
-  };
+# Anduril is dead, long live anduril. 9/7/11
+#foreach (`ssh -q schedule\@anduril.cat.pdx.edu \'last tty console| grep \"$date\"\'`){
+#  /^(.+?)\s+.+?\s+.+?\s+.+?\s+.+?\s+.+?\s+(.+?)\s+.+?\s+(.+?)\s+(.+)/;
+#  if($3 eq "logged"){
+#    push @strays, "$1 $2 $3 anduril";
+#  }elsif ($4 ne "(00:00)"){
+#   push @logs, "$1 $2 $3 anduril";
+#  };
+#};
+
+#Get chandra (dh sunray) logs
+foreach (`ssh -q schedule\@chandra.cs.pdx.edu \'last dtlocal | grep \"$date\"\'`){
+	# Some sample last output...
+	# sunshine  dtlocal      :5               Wed Sep  7 13:37   still logged in
+	# nibz      dtlocal      :3               Fri Sep  2 13:07 - down  (1+05:15)
+	# nibz      dtlocal      :3               Thu Sep  1 17:24 - 13:06  (19:42)
+	/^(.+?)\s+.+?\s+(.+?)\s+.+?(\d{2}:\d{2}).+?(\d{2}:\d{2}|logged).+?/;
+ 	if ($2 ne ":5") {
+		next;
+	};
+
+	if($4 eq "logged"){
+	}elsif ($4 ne "(00:00)"){
+		push @logs, "$1 $3 $4 chandra";
+	};
 };
 
 #Add aragog logs
@@ -56,7 +74,7 @@ foreach (`ssh -q schedule\@aragog.cat.pdx.edu \'last 1 2 3 4 5 6 7 8 9 10 | grep
 #Add windows logs
 foreach("hapi","mut","kupo"){
   my @temp2=();
-  foreach(`ssh schedule\@anduril.cat.pdx.edu \'grep "$windate" /u/schedule/logs/windows/*|grep -i $_\'`){
+  foreach(`ssh schedule\@chandra.cs.pdx.edu \'grep "$windate" /u/schedule/logs/windows/*|grep -i $_\'`){
     /^(?:.+:)(\w+),(\w+).+?(?:\w{4})(?:\w{2})(?:\w{2})(\w{2})(\w{2}),/;
     push @temp2, "$1 $3:$4 $2";
   };
