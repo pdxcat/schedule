@@ -33,6 +33,8 @@ if(@ARGV == 3){
   die "Usage: schedLogging.pl [YYYY MM DD]\n"
 };
 
+print "Doing things...\n";
+
 #Get anduril logs
 # Anduril is dead, long live anduril. 9/7/11
 #foreach (`ssh -q schedule\@anduril.cat.pdx.edu \'last tty console| grep \"$date\"\'`){
