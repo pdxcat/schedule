@@ -1,0 +1,52 @@
+/* Shift public weekly view styling */
+
+#shift_public {
+	background-color: #FFFFFF;
+	color: #000000;
+}
+
+#shift_public table {
+	width: 300px;
+	border-collapse: collapse;
+	border: 1px solid;
+	empty-cells: show;
+}
+
+#shift_public table td {
+	font-family: Arial, sans-serif;
+	font-size: .75em;
+	vertical-align: center;
+	text-align: center;
+	height: 2em;
+	border: 1px solid;
+}
+
+#shift_public table tr {
+	font-family: Arial, sans-serif;
+	border: 1px solid;
+}
+
+#shift_public table th {
+	border: 1px solid;
+}
+
+#shift_public table th.hour_label {
+	width: 14%;
+}
+
+#shift_public table th.day_label {
+	width: 14%;
+}
+
+#shift_public .cal_labels {
+	font-family: georgia, times new roman, serif;
+	font-size: 1em;
+}
+
+#shift_public .shift_dh {
+	color: #0033ff;
+}
+
+#shift_public .shift_kn {
+	color: #006600;
+}
