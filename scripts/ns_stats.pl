@@ -6,6 +6,7 @@ use Getopt::Long;
 use POSIX;
 use DBI;
 use Date::Calc;
+use Data::Dumper;
 
 # ns_stats.pl
 # Perform analysis of schedule shifts and log entries to determine who is at
@@ -49,6 +50,7 @@ my $logs_r = get_logs_for_day($datestr);
 
 # Sort the log entries by start time in ascending order
 #sort_log_entries(\@log_entries,'ns_shift_start_time');
+@$logs_r = sort { $a->{'ns_li_ontime'} cmp $b->{'ns_li_ontime'} } @$logs_r;
 
 # For a given shift...
 foreach my $shift (@{$shifts_r}) {
@@ -59,14 +61,36 @@ foreach my $shift (@{$shifts_r}) {
 
 	print $shift_id . " " . $datestr . ": " . $shift_start . " - " . $shift_end . "\n";
 
-	# Collect all assignments for the shift, store shift ID, desk ID, and
-	# cat ID for each assignment.
+	# Collect all assignments for the shift, store assignment ID, desk ID, 
+	# and cat ID for each assignment.
+	my $shift_assignments_r = get_assignments_by_shift($shift_id);
 
-
+	my %log_ranges = ();
 	# Iterate over the log entries
-#	foreach my $log_entry (@log_entries) {
+	foreach my $log_entry (@$logs_r) {
+		my $le_cat_id = $log_entry->{'ns_cat_id'};
+		my $le_on = $log_entry->{'ns_li_ontime'};
+		my $le_off = $log_entry->{'ns_li_offtime'};
+		# Set the location based on which machine the log entry was
+		# from. Manually created log entries should be considered 
+		# universal, this is effected by adding manual entries to the 
+		# ranges for both the doghaus and kennel so they will come up
+		# in comparisons against shifts for either location.
+		my @le_locations = ();
+		if (grep($log_entry->{'ns_li_machine'},('aragog','chandra','hapi'))) {
+			@le_locations = ("dh");
+		} elsif (grep($log_entry->{'ns_li_machine'},('kupo'))) {
+			@le_locations = ("kennel");
+		} elsif (grep($log_entry->{'ns_li_machine'},('override'))) {
+			@le_locations = ("dh","kennel");
+		} else {
+			# If the log entry doesn't match one of the above
+			# conditions just skip it.
+			next;
+		};
+
 		# Ranges will be stored like...
-		# {cat_id,location,[ranges]}
+		# (cat_id -> location -> [ranges])
 		# ranges[[range1start(hh:mm),range1end],[range2start,range2end]..etc.]
 
 		# Designate the start time of the first entry as the beginning of the
@@ -76,7 +100,7 @@ foreach my $shift (@{$shifts_r}) {
 		# log entry if it is before the end time of the shift. If it is equal
 		# to or after the end time of the shift, use the end time of the shift
 		# as the end of the range.
-		
+
 		# For each entry thereafter if the start time of the log entry is 
 		# before or equal to the end of the current range, set the end of the
 		# current range to be the end time of the log entry if it is before
@@ -90,14 +114,67 @@ foreach my $shift (@{$shifts_r}) {
 		# before the end time of the shift, or if it is after the end time of
 		# the shift use the end time of the shift as the end of the range.
 
-
 		# If the end time of the current range is equal to the end time of the
 		# shift store the range and break without iterating over any more log entries.
-
 		
 		# If the log entry processed on this iteration is the last of the log
 		# entries, then store the current range and exit the loop.
-#	};
+
+	
+		# (cat_id -> location -> [ranges])
+		# ranges[[range1start(hh:mm),range1end],[range2start,range2end]..etc.]
+		
+		foreach my $le_location (@le_locations) {
+			# if a range for the given cat and location exists	
+			if ($log_ranges{$le_cat_id}{$le_location}) {
+				# add to the existing range or create a new one as necessary
+				# if log start time later than range end time 
+				if ($log_ranges{$le_cat_id}{$le_location}[$#log_ranges{$le_cat_id}{$le_location}][2] < $le_on) {
+		 			# add new range
+					# range start = log start
+					push (@{$log_ranges{$le_cat_id}{$le_location}},[$le_on]);
+					# if log end time later than shift end time
+					if ($le_off > $shift_end) {
+						# range end = shift end
+						push (@{$log_ranges{$le_cat_id}{$le_location}}[$#log_ranges{$le_cat_id}{$le_location}],$shift_end);
+					} else {
+						# range end = log end
+						push (@{$log_ranges{$le_cat_id}{$le_location}}[$#log_ranges{$le_cat_id}{$le_location}],$le_off);
+					};
+				# elsif log end time == range end time
+				} elsif ($log_ranges{$le_cat_id}{$le_location}[$#log_ranges{$le_cat_id}{$le_location}][2] == $le_off) {
+					# skip to next entry
+					next;
+				} else {
+					# range end time earlier than log end time 
+					# modify existing range entry
+					@{$log_ranges{$le_cat_id}{$le_location}}[$#log_ranges{$le_cat_id}{$le_location}][2] = $le_off;
+				};
+			# if a range for the given cat and location doesn't exist
+			} else {
+				# create a new range for cat_id,location
+				# if log start time earlier than shift start time
+				if ($le_on < $shift_start) {
+					# range start = shift start
+					@{$log_ranges{$le_cat_id}{$le_location}} = [$shift_start];
+				} else {
+					# range start = log start
+					@{$log_ranges{$le_cat_id}{$le_location}} = [$le_on];
+				};
+				# if log end time later than shift end time
+				if ($le_off > $shift_end) {
+					# range end = shift end
+					push (@{$log_ranges{$le_cat_id}{$le_location}}[$#log_ranges{$le_cat_id}{$le_location}],$shift_end);
+				} else {
+					# range end = log end
+					push (@{$log_ranges{$le_cat_id}{$le_location}}[$#log_ranges{$le_cat_id}{$le_location}],$le_off);
+				};
+			};
+		};
+		
+	};
+
+	print Dumper(%log_ranges);
 
 	# Calculate how many minutes are in the shift being checked against, store this
 	# value.
@@ -186,7 +263,25 @@ sub get_logs_for_day {
 };
 
 
-sub sort_log_entries {
-	my $to_sort_r = $_[0];
-	my $sort_column = $_[1];
+# Get assignments for a given shift
+# Args: int shift id
+sub get_assignments_by_shift {
+	my $gabs_shift_id = $_[0];
+
+	my $sth_gabs = $dbh->prepare ('
+		SELECT ns_sa_id, ns_cat_id, ns_desk_id 
+		FROM `ns_shift_assigned`
+		WHERE `ns_shift_id` = ?
+		')
+		or die "Couldn't prepare statement: " . $dbh->errstr;
+
+	$sth_gabs->bind_param(1,$gabs_shift_id);
+	$sth_gabs->execute or die "Couldn't execute statement: " . $sth_gabs->errstr;
+
+	my @assignments;
+	while (my $result_r = $sth_gabs->fetchrow_hashref()) {
+		push (@assignments,$result_r);
+	};
+
+	return \@assignments;	
 };
