@@ -125,36 +125,41 @@ foreach my $shift (@{$shifts_r}) {
 		# ranges[[range1start(hh:mm),range1end],[range2start,range2end]..etc.]
 		
 		foreach my $le_location (@le_locations) {
+			# Ignore out of scope log entries
+			if ($le_off lt $shift_start || $le_on gt $shift_end) {
+				next;
+			};
+
 			# if a range for the given cat and location exists	
 			if ($log_ranges{$le_cat_id}{$le_location}) {
 				# add to the existing range or create a new one as necessary
 				# if log start time later than range end time 
-				if ($log_ranges{$le_cat_id}{$le_location}[$#log_ranges{$le_cat_id}{$le_location}][2] < $le_on) {
+				if ($log_ranges{$le_cat_id}{$le_location}[$#{$log_ranges{$le_cat_id}{$le_location}}][1] lt $le_on) {
 		 			# add new range
 					# range start = log start
-					push (@{$log_ranges{$le_cat_id}{$le_location}},[$le_on]);
+					push (@{$log_ranges{$le_cat_id}{$le_location}},[($le_on)]);
 					# if log end time later than shift end time
-					if ($le_off > $shift_end) {
+					if ($le_off gt $shift_end) {
 						# range end = shift end
-						push (@{$log_ranges{$le_cat_id}{$le_location}}[$#log_ranges{$le_cat_id}{$le_location}],$shift_end);
+						push (@{$log_ranges{$le_cat_id}{$le_location}[$#{$log_ranges{$le_cat_id}{$le_location}}]},$shift_end);
 					} else {
 						# range end = log end
-						push (@{$log_ranges{$le_cat_id}{$le_location}}[$#log_ranges{$le_cat_id}{$le_location}],$le_off);
+						push (@{$log_ranges{$le_cat_id}{$le_location}[$#{$log_ranges{$le_cat_id}{$le_location}}]},$le_off);
 					};
 				# elsif log end time == range end time
-				} elsif ($log_ranges{$le_cat_id}{$le_location}[$#log_ranges{$le_cat_id}{$le_location}][2] == $le_off) {
+				} elsif ($log_ranges{$le_cat_id}{$le_location}[$#{$log_ranges{$le_cat_id}{$le_location}}][1] eq $le_off) {
 					# skip to next entry
 					next;
 				} else {
 					# range end time earlier than log end time 
 					# modify existing range entry
-					@{$log_ranges{$le_cat_id}{$le_location}}[$#log_ranges{$le_cat_id}{$le_location}][2] = $le_off;
+					@{$log_ranges{$le_cat_id}{$le_location}[$#{$log_ranges{$le_cat_id}{$le_location}}]}[1] = $le_off;
 				};
 			# if a range for the given cat and location doesn't exist
 			} else {
 				# create a new range for cat_id,location
 				# if log start time earlier than shift start time
-				if ($le_on < $shift_start) {
+				if ($le_on lt $shift_start) {
 					# range start = shift start
 					@{$log_ranges{$le_cat_id}{$le_location}} = [$shift_start];
 				} else {
@@ -162,22 +167,23 @@ foreach my $shift (@{$shifts_r}) {
 					@{$log_ranges{$le_cat_id}{$le_location}} = [$le_on];
 				};
 				# if log end time later than shift end time
-				if ($le_off > $shift_end) {
+				if ($le_off gt $shift_end) {
 					# range end = shift end
-					push (@{$log_ranges{$le_cat_id}{$le_location}}[$#log_ranges{$le_cat_id}{$le_location}],$shift_end);
+					push (@{$log_ranges{$le_cat_id}{$le_location}[$#{$log_ranges{$le_cat_id}{$le_location}}]},$shift_end);
 				} else {
 					# range end = log end
-					push (@{$log_ranges{$le_cat_id}{$le_location}}[$#log_ranges{$le_cat_id}{$le_location}],$le_off);
+					push (@{$log_ranges{$le_cat_id}{$le_location}[$#{$log_ranges{$le_cat_id}{$le_location}}]},$le_off);
 				};
 			};
 		};
 		
 	};
 
-	print Dumper(%log_ranges);
-
 	# Calculate how many minutes are in the shift being checked against, store this
 	# value.
+
+	# Shift times are in hh:mm:ss format. Need to split out and do conversion to minutes.
+	my $shift_minutes = hhmmss_to_minutes($shift_end) - hhmmss_to_minutes($shift_start)
 
 	# Determine the coverage of the stored ranges, in minutes, store this value.
 
