@@ -91,9 +91,12 @@ if (!defined @ARGV) {
 # Main subroutine of the script, started if it receives valid arguments from the user. Steps through each day between the start and end dates supplied and generates shifts for those days.
 sub buildshifts {
 	getholidays();
-
-	my %wd_hours = ('start', 8, 'end', 18); 
-	my %we_hours = ('start', 12, 'end', 17); 
+	
+	# Set these times to the first and last *START* times you want shifts to have.
+	# They were set wrong before and shifts were being made for 6-7 PM and 5-6 PM
+	# on weekdays and weekends respectively -_- 10/21/2011
+	my %wd_hours = ('start', 8, 'end', 17); 
+	my %we_hours = ('start', 12, 'end', 16); 
 	my $seats = 1;
 	# yyyy mm dd
 	my @c_date  = ($start_date[0],$start_date[1],$start_date[2]);
