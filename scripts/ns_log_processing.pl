@@ -64,12 +64,29 @@ foreach (`ssh -q schedule\@chandra.cs.pdx.edu \'last dtlocal | grep \"$date\"\'`
 };
 
 #Add aragog logs
-foreach (`ssh -q schedule\@aragog.cat.pdx.edu \'last 1 2 3 4 5 6 7 8 9 10 | grep \"$date\" | grep -v wtmp\'`){
+# Aragog is gone, 10/20/2011
+#foreach (`ssh -q schedule\@aragog.cat.pdx.edu \'last 1 2 3 4 5 6 7 8 9 10 | grep \"$date\" | grep -v wtmp\'`){
+#  /^(.+?)\s+.+?\s+.+?\s+.+?\s+.+?\s+.+?\s+(.+?)\s+.+?\s+(.+?)\s+(.+)\s/;
+#  if($3 eq "logged"){
+#    push @strays, "$1 $2 $3 aragog";
+#  }elsif ($4 ne "(00:00)"){
+#    push @logs, "$1 $2 $3 aragog";
+#  };
+#};
+
+
+#Add minicat logs
+# Some sample last output: 
+#eidolon  pts/0        rawr.cat.pdx.edu Fri Oct 21 13:39   still logged in   
+#morbid   pts/0        :0.0             Fri Oct 21 11:22 - 11:26  (00:03)    
+#morbid   pts/0        :0.0             Fri Oct 21 10:12 - 11:22  (01:10)    
+#morbid   tty8         :0               Fri Oct 21 10:10 - 11:26  (01:15)  
+foreach (`ssh -q schedule\@minicat.cat.pdx.edu \'last 1 2 3 4 5 6 7 8 9 10 | grep \"$date\" | grep -v wtmp\'`){
   /^(.+?)\s+.+?\s+.+?\s+.+?\s+.+?\s+.+?\s+(.+?)\s+.+?\s+(.+?)\s+(.+)\s/;
   if($3 eq "logged"){
-    push @strays, "$1 $2 $3 aragog";
+    push @strays, "$1 $2 $3 minicat";
   }elsif ($4 ne "(00:00)"){
-    push @logs, "$1 $2 $3 aragog";
+    push @logs, "$1 $2 $3 minicat";
   };
 };
 

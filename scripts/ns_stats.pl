@@ -77,7 +77,7 @@ foreach my $shift (@{$shifts_r}) {
 		# ranges for both the doghaus and kennel so they will come up
 		# in comparisons against shifts for either location.
 		my @le_locations = ();
-		if (grep($log_entry->{'ns_li_machine'},('aragog','chandra','hapi'))) {
+		if (grep($log_entry->{'ns_li_machine'},('aragog','chandra','hapi','minicat'))) {
 			@le_locations = ("dh");
 		} elsif (grep($log_entry->{'ns_li_machine'},('kupo'))) {
 			@le_locations = ("kennel");
