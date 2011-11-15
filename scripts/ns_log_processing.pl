@@ -91,7 +91,7 @@ foreach (`ssh -q schedule\@minicat.cat.pdx.edu \'last 1 2 3 4 5 6 7 8 9 10 | gre
 };
 
 #Add windows logs
-foreach("hapi","mut","kupo"){
+foreach("hapi","mut","kupo","aragog"){
   my @temp2=();
   foreach(`ssh schedule\@chandra.cs.pdx.edu \'grep "$windate" /u/schedule/logs/windows/*|grep -i $_\'`){
     /^(?:.+:)(\w+),(\w+).+?(?:\w{4})(?:\w{2})(?:\w{2})(\w{2})(\w{2}),/;

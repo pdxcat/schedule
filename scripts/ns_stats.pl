@@ -182,8 +182,18 @@ foreach my $shift (@{$shifts_r}) {
 	# Calculate how many minutes are in the shift being checked against, store this
 	# value.
 
-	# Shift times are in hh:mm:ss format. Need to split out and do conversion to minutes.
-	my $shift_minutes = hhmmss_to_minutes($shift_end) - hhmmss_to_minutes($shift_start)
+	# ($Dd,$Dh,$Dm,$Ds) = Delta_DHMS($year1,$month1,$day1, $hour1,$min1,$sec1, $year2,$month2,$day2, $hour2,$min2,$sec2);
+	# Shift times are in hh:mm:ss format.
+	my @shift_starta = $shift_start =~ m/(\d[2]):(\d[2]):(\d[2])/;
+	my @shift_enda = $shift_end =~ m/(\d[2]):(\d[2]):(\d[2])/;
+
+	print "Dump: \n";
+	Dumper(@shift_starta);
+	print "\n";
+
+	my %shift_duration;
+	@shift_duration{'dd','hh','mm','ss'} = Date::Calc::Delta_DHMS(2011,10,26,@shift_starta[0..2],2011,10,26,@shift_enda[0..2]);
+	print $shift_duration{'hh'} . ":" . $shift_duration{'mm'} . "\n";
 
 	# Determine the coverage of the stored ranges, in minutes, store this value.
 
