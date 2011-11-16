@@ -68,7 +68,7 @@ my $die_early = 0;
 # active in the scheduling system and eligible for desk duty.
 my $dogs_hash_ref;
 if (!$args{'dog_name'}) {
-	print "A valid dog name (using the -d name option) must be specified.\n";
+	print "A valid dog name (using -d \"name\") must be specified.\n";
 	$die_early = 1;
 } else {
 	$dogs_hash_ref = get_dogs(\@dog_types);
@@ -104,32 +104,47 @@ if (!$args{'term_name'} && !$args{'date_range'} || $args{'term_name'} && $args{'
 		$die_early = 1;
 	} else { 
 		print "$args{term_name} has id $term_id.\n";
+
+		# Get the details of the term we're working with
+		my $sth_get_term_dates = $dbh->prepare('
+		SELECT ns_term_startdate, ns_term_enddate
+		FROM ns_term
+		WHERE ns_term_id = ?')
+		or die "Couldn't prepare statement: " . $dbh->errstr;
+		$sth_get_term_dates->bind_param(1,$term_id);
+		$sth_get_term_dates->execute;
+
+		# Populate the part of the start_date and end_date hashes
+		# Fetch the "long forms" from the database
+		($start_date{'yyyy-mm-dd'},$end_date{'yyyy-mm-dd'}) 
+			= $sth_get_term_dates->fetchrow_array;
+
+		# Chunk out the long forms for later usage
+		@start_date{'yyyy','mm','dd'} 
+			= ($start_date{'yyyy-mm-dd'} 
+			=~ m/(\d\d\d\d)-(\d\d)-(\d\d)/);
+		@end_date{'yyyy','mm','dd'} 
+			= ($end_date{'yyyy-mm-dd'} 
+			=~ m/(\d\d\d\d)-(\d\d)-(\d\d)/);
 	};
 
-	# Get the details of the term we're working with
-	my $sth_get_term_dates = $dbh->prepare('
-	SELECT ns_term_startdate, ns_term_enddate
-	FROM ns_term
-	WHERE ns_term_id = ?')
-	or die "Couldn't prepare statement: " . $dbh->errstr;
-	$sth_get_term_dates->bind_param(1,$term_id);
-	$sth_get_term_dates->execute;
-
-	# Populate the part of the start_date and end_date hashes
-	# Fetch the "long forms" from the database
-	($start_date{'yyyy-mm-dd'},$end_date{'yyyy-mm-dd'}) 
-		= $sth_get_term_dates->fetchrow_array;
-
-	# Chunk out the long forms for later usage
-	@start_date{'yyyy','mm','dd'} 
-		= ($start_date{'yyyy-mm-dd'} 
-		=~ m/(\d\d\d\d)-(\d\d)-(\d\d)/);
-	@end_date{'yyyy','mm','dd'} 
-		= ($end_date{'yyyy-mm-dd'} 
-		=~ m/(\d\d\d\d)-(\d\d)-(\d\d)/);
-
 } elsif ($args{'date_range'} && !$args{'term_name'}) {
+	if ($args{'date_range'} !~ m/\d{4}-\d\d-\d\d\s\d{4}-\d\d-\d\d/) {
+		print "Invalid date range specified. (Use the format \"-r yyyy-mm-dd yyyy-mm-dd\").\n";
+		$die_early = 1;
+	} else {
+		# Populate the part of the start_date and end_date hashes
+		($start_date{'yyyy-mm-dd'},$end_date{'yyyy-mm-dd'})
+			= $args{'date_range'} =~ m/(\d{4}-\d\d-\d\d)\s(\d{4}-\d\d-\d\d)/;
 
+		# Chunk out the long forms for later usage
+		@start_date{'yyyy','mm','dd'} 
+			= ($start_date{'yyyy-mm-dd'} 
+			=~ m/(\d\d\d\d)-(\d\d)-(\d\d)/);
+		@end_date{'yyyy','mm','dd'} 
+			= ($end_date{'yyyy-mm-dd'} 
+			=~ m/(\d\d\d\d)-(\d\d)-(\d\d)/);
+	};	
 };
 
 
@@ -154,6 +169,9 @@ if ($args{'day_name'} =~ m/\d/ && $args{'day_name'} > 0 && $args{'day_name'} < 8
 	$args{day_id} = 5;
 } elsif ($args{day_name} =~ m/saturday/i) {
 	$args{day_id} = 6;
+} elsif (!$args{day_name}) {
+	print "A day of the week to schedule for must be specified (using -n \"day\" or -n [1-6].)\n";
+	$die_early = 1;
 } else {
 	print "Invalid day specified ($args{day_name}).\n";
 	$die_early = 1;
@@ -165,7 +183,6 @@ if (!$die_early) {
 
 
 # Chunk out the given start and end times so we can work with them
-
 # The binding operator creates a list of matches, so assignment of the result
 # must be to a list.
 @{$args{'start_time'}}{'hh','mm'} = $args{'start_time'}{'actual'} =~ /(\d\d)(\d\d)/;
@@ -175,14 +192,15 @@ if (!$die_early) {
 # the first date comes BEFORE the second date. It will return negative
 # values if the first date comes AFTER the second date.
 
+# Check that start time and end time are within business hours for the given day of the week
 # Check that the end time is after the start time
-if ($args{start_time}{hh} >= $args{end_time}{hh}) {
+if (!$args{'start_time'}{'actual'} || !$args{'end_time'}{'actual'}) {
+	print "Start and end times must be specified (using -s hhmm for start, -e hhmm for end).\n";
+	$die_early = 1;
+} elsif ($args{start_time}{hh} >= $args{end_time}{hh}) {
 	print "Start time must be after end time!\n";
 	$die_early = 1;
-};
-
-# Check that start time and end time are within business hours for the given day of the week
-if ($args{day_id} >= 1 && $args{day_id} <= 5) {
+} elsif ($args{day_id} >= 1 && $args{day_id} <= 5) {
 	# Check against weekday start and end times
 	my %result;
 	@result{'dd','hh','mm','ss'} 
@@ -251,7 +269,7 @@ if ($args{desk_id} eq "no match") {
 	print "No such desk \"$args{desk_name}\" exists in the database.\n";
 	$die_early = 1;
 } else {
-	print "$args{desk_name} has id $args{desk_id}.\n";
+	print "$args{desk_name} has id $args{desk_id} (an alternate desk may be specified using -l deskname).\n";
 };
 
 
@@ -409,7 +427,7 @@ sub new_assignment {
 	$sth_add_assignment->bind_param(2,$na_args{'shift_id'});
 	$sth_add_assignment->bind_param(3,$na_args{'desk_id'});
 	my $current_timestamp = strftime "%Y-%m-%d %H:%M:%S", localtime;
-	print $current_timestamp . "\n";
+	#print $current_timestamp . "\n";
 	$sth_add_assignment->bind_param(4,$current_timestamp);
 	#$sth_add_assignment->execute;
 	print "Assignment successful for DOG $na_args{'dog_id'}, shift $na_args{'shift_id'}.\n";
@@ -489,8 +507,8 @@ sub get_id_from_value {
 	my $hash_ref = $_[1];
 	my $return_id;
 	foreach my $id (keys(%{$hash_ref})) {
-		# Case insensitive! 
-		if ($hash_ref->{$id} =~ m/$search_value/i) {
+		# Case insensitive!
+		if ($hash_ref->{$id} =~ m/^$search_value$/i) {
 			$return_id = $id;
 			last;
 		};		
