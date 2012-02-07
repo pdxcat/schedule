@@ -230,7 +230,6 @@ if (!$args{'start_time'}{'actual'} || !$args{'end_time'}{'actual'}) {
 	@result{'dd','hh','mm','ss'} 
 		= Date::Calc::Delta_DHMS(2011,5,23,@{$args{'start_time'}}{'hh','mm'},0,
 		2011,5,23,$hours{'weekend_start'},0,0);
-	print $result{'hh'} . "\n";
 	if ($result{'hh'} > 0) {
 		print "Specified start time is too early.\n";
 		$die_early = 1;
@@ -238,7 +237,6 @@ if (!$args{'start_time'}{'actual'} || !$args{'end_time'}{'actual'}) {
 	@result{'dd','hh','mm','ss'} 
 		= Date::Calc::Delta_DHMS(2011,5,23,@{$args{'start_time'}}{'hh','mm'},0,
 		2011,5,23,$hours{'weekend_end'},0,0);
-	print $result{'hh'} . "\n";
 	if ($result{'hh'} < 1 ) {
 		print "Specified start time is too late.\n";
 		$die_early = 1;
@@ -246,7 +244,6 @@ if (!$args{'start_time'}{'actual'} || !$args{'end_time'}{'actual'}) {
 	@result{'dd','hh','mm','ss'} 
 		= Date::Calc::Delta_DHMS(2011,5,23,@{$args{'end_time'}}{'hh','mm'},0,
 		2011,5,23,$hours{'weekend_end'},0,0);
-	print $result{'hh'} . "\n";
 	if ($result{'hh'} < 0) {
 		print "Specified end time is too late!\n";
 		$die_early = 1;
@@ -429,7 +426,7 @@ sub new_assignment {
 	my $current_timestamp = strftime "%Y-%m-%d %H:%M:%S", localtime;
 	#print $current_timestamp . "\n";
 	$sth_add_assignment->bind_param(4,$current_timestamp);
-	#$sth_add_assignment->execute;
+	$sth_add_assignment->execute;
 	print "Assignment successful for DOG $na_args{'dog_id'}, shift $na_args{'shift_id'}.\n";
 };
 

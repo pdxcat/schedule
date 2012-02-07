@@ -41,7 +41,7 @@ my $user = "schedule";
 my $password = "jm)n3Ffz6m";
 my $dbh = DBI->connect ("DBI:mysql:database=$db:host=$host",$user,$password) or die "Can't connect to database: $DBI::errstr\n";
 
-# Fetch active assignments for the given day.
+# Fetch shifts for the given day.
 my $shifts_r = get_shifts_for_day($datestr);
 
 # Collect all log entries for the given day. 
@@ -61,10 +61,6 @@ foreach my $shift (@{$shifts_r}) {
 
 	print $shift_id . " " . $datestr . ": " . $shift_start . " - " . $shift_end . "\n";
 
-	# Collect all assignments for the shift, store assignment ID, desk ID, 
-	# and cat ID for each assignment.
-	my $shift_assignments_r = get_assignments_by_shift($shift_id);
-
 	my %log_ranges = ();
 	# Iterate over the log entries
 	foreach my $log_entry (@$logs_r) {
@@ -77,9 +73,9 @@ foreach my $shift (@{$shifts_r}) {
 		# ranges for both the doghaus and kennel so they will come up
 		# in comparisons against shifts for either location.
 		my @le_locations = ();
-		if (grep($log_entry->{'ns_li_machine'},('aragog','chandra','hapi','minicat'))) {
+		if (grep($log_entry->{'ns_li_machine'},('aragog','chandra','hapi','minicat','scissors','rock'))) {
 			@le_locations = ("dh");
-		} elsif (grep($log_entry->{'ns_li_machine'},('kupo'))) {
+		} elsif (grep($log_entry->{'ns_li_machine'},('kupo','paper'))) {
 			@le_locations = ("kennel");
 		} elsif (grep($log_entry->{'ns_li_machine'},('override'))) {
 			@le_locations = ("dh","kennel");
@@ -184,27 +180,97 @@ foreach my $shift (@{$shifts_r}) {
 
 	# ($Dd,$Dh,$Dm,$Ds) = Delta_DHMS($year1,$month1,$day1, $hour1,$min1,$sec1, $year2,$month2,$day2, $hour2,$min2,$sec2);
 	# Shift times are in hh:mm:ss format.
-	my @shift_starta = $shift_start =~ m/(\d[2]):(\d[2]):(\d[2])/;
-	my @shift_enda = $shift_end =~ m/(\d[2]):(\d[2]):(\d[2])/;
-
-	print "Dump: \n";
-	Dumper(@shift_starta);
-	print "\n";
+	my @shift_starta = $shift_start =~ m/(\d{2}):(\d{2}):(\d{2})/;
+	my @shift_enda = $shift_end =~ m/(\d{2}):(\d{2}):(\d{2})/;
 
 	my %shift_duration;
 	@shift_duration{'dd','hh','mm','ss'} = Date::Calc::Delta_DHMS(2011,10,26,@shift_starta[0..2],2011,10,26,@shift_enda[0..2]);
-	print $shift_duration{'hh'} . ":" . $shift_duration{'mm'} . "\n";
+	$shift_duration{'mm'} += ($shift_duration{'hh'} * 60);
+	print "Shift duration: " . $shift_duration{'mm'} . " minutes.\n";
 
-	# Determine the coverage of the stored ranges, in minutes, store this value.
 
-	# Compare the actual coverage against that required by the shift. 
+	# Collect all assignments for the shift, store assignment ID, desk ID, 
+	# and cat ID for each assignment.
+	my $shift_assignments_r = get_assignments_by_shift($shift_id);
 
-	# Rules:
-	# -10 minute "grace" period. 
-	# -If more than 10 minutes of a shift are missed, count the whole shift as 
-	#  missed.
 
-	# Store the result of this comparison
+	# Iterate over the assignments for the current shift. assignment{ns_cat_id,ns_sa_id,ns_desk_id}
+	foreach my $assignment_r (@$shift_assignments_r) {
+		print "Assignment ID: " . $assignment_r->{'ns_sa_id'} . "\n";
+
+		# Translate the desk id from the assignment into a format we can match
+		# against the locations stored with the log ranges generated earlier.
+		my $a_location;
+		if ($assignment_r->{'ns_desk_id'} == 2) {
+			print "Location: DOGHaus\n";
+			$a_location = "dh";
+		} elsif ($assignment_r->{'ns_desk_id'} == 3) { 
+			print "Location: Kennel\n";
+			$a_location = "kennel";
+		} else { 
+			print "Assignment $assignment_r->{'ns_sa_id'} was made to an invalid desk id ($assignment_r->{'ns_desk_id'}), skipping.\n";
+			next;
+		};
+
+		foreach my $r_cat (keys %log_ranges) {
+			if ($r_cat == $assignment_r->{'ns_cat_id'}) {
+				my %coverage = ();
+				print "Found range for cat ID: " . $r_cat . "\n";
+
+				# The below bit needs work
+
+				foreach my $r_loc (keys %{$log_ranges{$r_cat}}) {
+					if ($r_loc eq $a_location) {
+						print "Range location matches assignment location.\n";
+						foreach my $r_times (@{$log_ranges{$r_cat}{$r_loc}}) {
+							print "Start: " . $r_times->[0] . "\n";
+							print "End: " . $r_times->[1] . "\n";
+
+							my @st = $r_times->[0] =~ m/(\d\d):(\d\d):\d\d/;
+							my @et = $r_times->[1] =~ m/(\d\d):(\d\d):\d\d/;
+
+							@coverage{'yy','mo','dd','hh','mm','ss'} 
+								= Date::Calc::N_Delta_YMDHMS(2011,10,26,@st[0..1],0,2011,10,26,@et[0..1],0);
+							$coverage{'mm'} += ($coverage{'hh'} * 60);
+							print "Logged coverage: " . $coverage{'mm'} . " minutes.\n";
+						};
+
+
+
+					} else {
+						print "Range location does not match assignment location.\n";
+						next;
+					};
+				};
+			} else {
+				next;
+			};
+		};
+
+	}; 
+
+
+		# %log_ranges
+		# (cat_id -> location -> [ranges])
+		# ranges[[range1start(hh:mm),range1end],[range2start,range2end]..etc.]
+
+		# Determine the coverage of the stored ranges, if any, for the CAT who assignment it is.
+		# For each range...
+			# Check cat_id
+				# Check location
+					# Determine difference between start and end of range in minutes
+					# Increment range in minutes variable by the difference
+
+		# Compare the actual coverage against that required by the shift. 
+		# Get the difference between $shift_duration{'mm'} and the range in minutes variable
+
+		# Rules:
+		# -10 minute "grace" period. 
+		# -If more than 10 minutes of a shift are missed, count the whole shift as 
+		#  missed.
+
+		# Store the result of this comparison
+	print "\n";
 };
 
 

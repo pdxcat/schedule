@@ -99,9 +99,11 @@ sub ho_add {
 	# Search through the existing holidays to make sure there are no 
 	# collisions with the holiday to be added.
 	foreach my $id (keys(%{$ho_ref})) {
-		if ($ho_ref->{$id}->{'ns_holiday_name'} 
+		if (($ho_ref->{$id}->{'ns_holiday_name'} 
 		eq $args_ref->{'name'}
-		|| $ho_ref->{$id}->{'ns_holiday_date'} 
+		&& $ho_ref->{$id}->{'ns_holiday_date'} 
+		eq $args_ref->{'date'})
+		|| $ho_ref->{$id}->{'ns_holiday_date'}
 		eq $args_ref->{'date'}) {
 			print "Collision detected!\n";
 			exit;
