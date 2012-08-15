@@ -1,62 +1,62 @@
 body {
-	background-color: #000000;
-	color: #FFFFFF;
+  background-color: #000000;
+  color: #FFFFFF;
 }
 
 table {
-	width: auto;
-	margin-left: auto;
-	margin-right: auto;
-	border-collapse: collapse;
-	border: 1px solid;
-	empty-cells: show;
+  width: auto;
+  margin-left: auto;
+  margin-right: auto;
+  border-collapse: collapse;
+  border: 1px solid;
+  empty-cells: show;
 }
 
 th {
-	font-family: Arial, sans-serif;
-	font-size: 1em;
-	padding: 5px;
-	text-align: center;
-	border: 1px solid;
+  font-family: Arial, sans-serif;
+  font-size: 1em;
+  padding: 5px;
+  text-align: center;
+  border: 1px solid;
 }
 
 td {
-	font-family: Arial, sans-serif;
-	font-size: .75em;
-	border: 1px solid;
-	padding: 3px;
+  font-family: Arial, sans-serif;
+  font-size: .75em;
+  border: 1px solid;
+  padding: 3px;
 }
 
 #page-container {
-	width: 960px;
-	margin-left: auto;
-	margin-right: auto;
+  width: 960px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 #content {
-	min-height: 350px;
+  min-height: 350px;
 }
 
 #top-nav {
-	height: 40px;
+  height: 40px;
 }
 
 #cal_buttons {
-	text-align: center;
+  text-align: center;
 }
 
 .cal_month {
-	font-family: georgia, times new roman, serif;
-	text-align: center;
-	font-size: 1.25em;
+  font-family: georgia, times new roman, serif;
+  text-align: center;
+  font-size: 1.25em;
 }
 
 .shift_dh {
-	color: #0099ff;
+  color: #0099ff;
 }
 
 .shift_kn {
-	color: #009933;
+  color: #009933;
 }
 
 /* Shift calendar view styling */
@@ -65,52 +65,48 @@ table.shift_calendar {
 }
 
 table.shift_calendar td {
-	vertical-align: top;
-	height: 100px;
+  vertical-align: top;
+  height: 100px;
 }
 
 table.shift_calendar tr {
 }
 
 table.shift_calendar th {
-	width: 14%;
+  width: 14%;
 }
 
 table.shift_calendar .cell_label {
-	text-align: left;
+  text-align: left;
 }
 
 table.shift_calendar .cell_content {
-	text-align: center;
+  text-align: center;
 }
 
 /* Shift list view styling */
 
 table.shift_list {
-
 }
 
 table.shift_list td {
-
 }
 
 table.shift_list tr {
-
 }
 
 table.shift_list th {
-
 }
 
 /* Shift weekly view styling */
 
 table.shift_weekly {
-	width: 600px;
+  width: 600px;
 }
 
 table.shift_weekly td {
-	vertical-align: center;
-	height: 5em;
+  vertical-align: center;
+  height: 5em;
 }
 
 table.shift_weekly tr {
@@ -121,9 +117,9 @@ table.shift_weekly th {
 }
 
 table.shift_weekly th.hour_label {
-	width: 4%;
+  width: 4%;
 }
 
 table.shift_weekly th.day_label {
-	width: 16%;
+  width: 16%;
 }
