@@ -36,7 +36,7 @@ if ($username) {
   // if not abort.
   $cat_id = get_cat_id($username, $dbh);
   if (!$cat_id) {
-    echo "You don't seem to be active in the schedule database. If you believe this is an error please contact the scheduler.<br />\n";
+    echo "You don't seem to have any shifts scheduled. If you believe this is an error please contact the scheduler.<br />\n";
     exit;
   };
 
