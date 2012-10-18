@@ -1,0 +1,12 @@
+AuthType Basic
+AuthName catsonly 
+AuthBasicProvider external
+AuthExternal pwauth
+SSLRequireSSL
+GroupExternal groupcheck
+require group hiss
+
+<Files ~ "\.inc$">
+    Order allow,deny
+    Deny from all
+</Files>
