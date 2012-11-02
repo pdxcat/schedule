@@ -18,7 +18,7 @@ function thiscolor(elem) {
 require("db.inc");
 $username=$_SERVER[PHP_AUTH_USER];
 echo "$username";
-$connection = mysql_pconnect($db_host,$db_user,$db_pass) or die ("Couldn't connect
+$connection = mysql_pconnect($db_host,$db_user,$db_password) or die ("Couldn't connect
  to server.");
 $db = mysql_select_db($db_database,$connection) or die ("Unable to connect to the $connection database.");
 
