@@ -8,11 +8,9 @@
 
 $username=$_SERVER[PHP_AUTH_USER];
 require ("db.inc");
-$connection = mysql_connect($host,$user,$password) or die ("Couldn't connect to
-        server.");
+$connection = mysql_connect($db_host,$db_user,$db_password) or die ("Couldn't connect to server.");
 
-$database = $user;
-$db = mysql_select_db($database,$connection) or die ("Unable to connect to the
+$db = mysql_select_db($db_database,$connection) or die ("Unable to connect to the
         $connection database.");
 foreach(array("Mon","Tues","Wed","Thurs","Fri","Sat") as $day){
 	for($i=8;$i<=17;$i++){

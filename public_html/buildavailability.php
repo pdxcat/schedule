@@ -16,15 +16,11 @@ function thiscolor(elem) {
 
 # Sets host, user, password variables
 require("db.inc");
-$dbhost=$host;
-$dbuser=$user;
-$dbpass=$password;
 $username=$_SERVER[PHP_AUTH_USER];
 echo "$username";
-$connection = mysql_pconnect($dbhost,$dbuser,$dbpass) or die ("Couldn't connect
+$connection = mysql_pconnect($db_host,$db_user,$db_pass) or die ("Couldn't connect
  to server.");
-$database = $dbuser;
-$db = mysql_select_db($database,$connection) or die ("Unable to connect to the $connection database.");
+$db = mysql_select_db($db_database,$connection) or die ("Unable to connect to the $connection database.");
 
 echo "<form action = 'processform.php' method='POST'>";
 
@@ -51,7 +47,7 @@ for($i=8; $i<18; $i++){
 			$options=array("u","a","p");
 			echo "<td><select name='" . $day . "-" . $j . "' onChange=\"thiscolor(this);\">\n";
 			foreach(array("u","a","p") as $option){
-				echo "<option value='" . $option . "'"; 
+				echo "<option value='" . $option . "'";
 				if($row[0]==$option){
 					echo " selected";
 ##				}else{
