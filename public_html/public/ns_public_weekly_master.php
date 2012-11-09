@@ -109,7 +109,7 @@ Schedule key: <br />
 function start_db() {
         // Establishes the database connection.
         // Uses an include file with some special permissions on it.
-        require('db.inc');
+        require('../db.inc');
         $db_database = "schedule";
         try {
                 $dbh = new PDO("mysql:host=$db_host;dbname=$db_database",$db_user,$db_password);
