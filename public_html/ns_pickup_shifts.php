@@ -171,7 +171,7 @@ function pickup_shifts_by_sd_ids ( &$pickup_shifts, $username, &$dbh ) {
   foreach ($shift_info as &$shift) {
 
     $sth->bindParam(':ns_shift_id',$shift['ns_shift_id']);
-    $sth->bindParam(':ns_cat_id',$cat_id[0]);
+    $sth->bindParam(':ns_cat_id',$cat_id);
     $sth->bindParam(':ns_desk_id',$shift[ns_desk_id]);
     $sth->bindParam(':timestamp',$timestamp);
 
@@ -196,7 +196,7 @@ function pickup_shifts_by_sd_ids ( &$pickup_shifts, $username, &$dbh ) {
 
     $sth->bindParam(':timestamp',$timestamp);
     $sth->bindParam(':ns_sd_id',$shift['ns_sd_id']);
-    $sth->bindParam(':ns_cat_id',$cat_id[0]);
+    $sth->bindParam(':ns_cat_id',$cat_id);
     $sth->bindParam(':ns_sa_id',$shift[ns_sa_id]);
 
     $sth->execute();

@@ -182,7 +182,7 @@ function generate_shifts_calendar( $gct_username, $cat_id, &$dbh ) {
 	retrieving all of the shifts available for pickup which do not
 	overlap with other shifts of the user's.
 	*/
-	$gct_shifts = get_shifts_to_pickup($cat_id[0], $dbh);
+	$gct_shifts = get_shifts_to_pickup($cat_id, $dbh);
 
 	
 	// Start actually assembling the calendar table into which all of this

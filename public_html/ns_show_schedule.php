@@ -175,7 +175,7 @@ function generate_shifts_calendar( $gct_username, $cat_id, &$dbh ) {
   // logged in user's id in the schedule database, follow it up by
   // sucking up all of the assigned shifts for this user.
   start_db();
-  $gct_shifts = get_shifts($cat_id[0], $dbh);
+  $gct_shifts = get_shifts($cat_id, $dbh);
 
   // Format start and end times in hhmm format
   foreach ($gct_shifts as &$shift) {

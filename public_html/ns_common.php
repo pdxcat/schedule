@@ -386,30 +386,46 @@ function get_shifts_from_sd_ids( $sd_ids, &$dbh ) {
 
 
 function get_cat_id( $gci_uname, &$dbh ) {
-  // Retrieve schedule DB ID numbers for the given username. Returns an
-  // array of all matching IDs.
+  // Retrieve schedule DB ID number for the given username.
+  // If the username does not yet have an ID number, one is created.
 
-  // Set up and run the query to grab all ID numbers for the given CAT username
+  // Set up and run the query to grab the ID number for the given CAT username
   $query = "
     SELECT ns_cat_id
     FROM ns_cat
     WHERE ns_cat_uname = ?";
-
   $sth = $dbh->prepare($query);
-
   $sth->bindParam(1, $gci_uname);
-
   $sth->execute();
+  $ids = build_array_from_query_results($sth, 'ns_cat_id');
 
-  $sth->setFetchMode(PDO::FETCH_ASSOC);
+  if (count($ids) == 0) {
+    echo "<p>Adding to database...</p>";
+    $stmt = "INSERT INTO ns_cat (ns_cat_uname, ns_cat_handle) VALUES (?, ?)";
+    $pStmt = $dbh->prepare($stmt);
+    $pStmt->bindParam(1, $gci_uname);
+    $pStmt->bindParam(2, $gci_uname);
+    $pStmt->execute();
 
-  $ids = array();
-  while ($row = $sth->fetch()) {
-    $ids[] = $row['ns_cat_id'];
+    $sth->execute();
+    $ids = build_array_from_query_results($sth, 'ns_cat_id');
+  }
+
+  return $ids[0];
+};
+
+function build_array_from_query_results($preparedStatement, $columnName) {
+  // Given a prepared statement, this will return an array containing the
+  // values for the named column.
+  $preparedStatement->setFetchMode(PDO::FETCH_ASSOC);
+
+  $values = array();
+  while ($row = $preparedStatement->fetch()) {
+    $values[] = $row[$columnName];
   };
 
-  return $ids;
-};
+  return $values;
+}
 
 /*
   Using this since we're currently runing PHP 5.2.mumble. It's taken from an
