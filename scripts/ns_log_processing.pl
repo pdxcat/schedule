@@ -39,10 +39,10 @@ if ($datearg =~ /^(\d{4})-(\d{2})-(\d{2})$/ && $rangearg eq "") {
 		$weekday = strftime("%a", 0,0,0,$rangecurrent[2],$rangecurrent[1]-1,$rangecurrent[0]-1900);
 		$windate = sprintf("%4d%02d%02d",@rangecurrent[0..2]);
 		$dbdate = sprintf("%4d-%02d-%02d",@rangecurrent[0..2]);
-		
+
 		process_logs();
 
-		@rangecurrent[0..2] = Date::Calc::Add_Delta_Days(@rangecurrent[0..2],1); 
+		@rangecurrent[0..2] = Date::Calc::Add_Delta_Days(@rangecurrent[0..2],1);
 	};
 
 } elsif ($datearg eq "" && $rangearg eq "") {
@@ -111,11 +111,11 @@ sub process_logs {
 
 
 	#Add scissors logs (formerly minicat)
-	# Some sample last output: 
-	#eidolon  pts/0        rawr.cat.pdx.edu Fri Oct 21 13:39   still logged in   
-	#morbid   pts/0        :0.0             Fri Oct 21 11:22 - 11:26  (00:03)    
-	#morbid   pts/0        :0.0             Fri Oct 21 10:12 - 11:22  (01:10)    
-	#morbid   tty8         :0               Fri Oct 21 10:10 - 11:26  (01:15)  
+	# Some sample last output:
+	#eidolon  pts/0        rawr.cat.pdx.edu Fri Oct 21 13:39   still logged in
+	#morbid   pts/0        :0.0             Fri Oct 21 11:22 - 11:26  (00:03)
+	#morbid   pts/0        :0.0             Fri Oct 21 10:12 - 11:22  (01:10)
+	#morbid   tty8         :0               Fri Oct 21 10:10 - 11:26  (01:15)
 	foreach (`ssh -q schedule\@scissors.cat.pdx.edu \'last | grep \"$date\" | grep -v wtmp\ | grep \":0\" '`){
 	  /^(.+?)\s+.+?\s+.+?\s+.+?\s+.+?\s+.+?\s+(.+?)\s+.+?\s+(.+?)\s+(.+)\s/;
 	  if($3 eq "logged"){

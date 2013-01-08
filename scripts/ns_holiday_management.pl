@@ -4,12 +4,12 @@ use warnings;
 use DBI;
 
 # ns_holiday_management.pl
-# View, add, edit, and remove holidays from the schedule database.                
+# View, add, edit, and remove holidays from the schedule database.
 
-my $db = "schedule";                                                                
+my $db = "schedule";
 my $host = "db.cecs.pdx.edu";
-my $user = "schedule"; 
-my $password = "jm)n3Ffz6m";                              
+my $user = "schedule";
+my $password = "jm)n3Ffz6m";
 my $dbh = DBI->connect ("DBI:mysql:database=$db:host=$host",$user,$password) or die "Can't connect to database: $DBI::errstr\n";
 
 # Check arguments. Valid ones are:
@@ -51,9 +51,9 @@ if (!defined $ARGV[0]) {
 	$args{'name'} = $namestring;
 	if (defined $args{'name'} && defined $args{'date'} && $args{'name'} ne "") {
 		ho_add(\%args);
-	} else { 
+	} else {
 		print $invalid_args_message;
-		exit;	
+		exit;
 	};
 # Option to delete a holiday entry
 } elsif ($ARGV[0] eq "-d") {
@@ -61,7 +61,7 @@ if (!defined $ARGV[0]) {
 		my %args = (
 		'date' => $ARGV[1]);
 		ho_del_date(\%args);
-	} else { 
+	} else {
 		my $namestring;
 		for my $i (1 .. $#ARGV) {
 			if ($i == 1) {
@@ -69,7 +69,7 @@ if (!defined $ARGV[0]) {
 			} else {
 				$namestring .= " $ARGV[$i]";
 			};
-		};	
+		};
 		my %args = (
 		'name' => $namestring);
 		ho_del_name(\%args);
@@ -96,23 +96,23 @@ sub ho_add {
 	# Reference passed should have 'name', 'date'.
 	my $args_ref = $_[0];
 	my $ho_ref = ho_get();
-	# Search through the existing holidays to make sure there are no 
+	# Search through the existing holidays to make sure there are no
 	# collisions with the holiday to be added.
 	foreach my $id (keys(%{$ho_ref})) {
-		if (($ho_ref->{$id}->{'ns_holiday_name'} 
+		if (($ho_ref->{$id}->{'ns_holiday_name'}
 		eq $args_ref->{'name'}
-		&& $ho_ref->{$id}->{'ns_holiday_date'} 
+		&& $ho_ref->{$id}->{'ns_holiday_date'}
 		eq $args_ref->{'date'})
 		|| $ho_ref->{$id}->{'ns_holiday_date'}
 		eq $args_ref->{'date'}) {
 			print "Collision detected!\n";
 			exit;
 		};
-	};	
+	};
 	# If there aren't any collisions with existing entries, add a new one
 	# with the specified attributes.
 	my $sth_add_ho = $dbh->prepare(
-	'INSERT INTO ns_holiday (ns_holiday_name, ns_holiday_date) 
+	'INSERT INTO ns_holiday (ns_holiday_name, ns_holiday_date)
 	VALUES (?, ?)') or die "Couldn't prepare statement: $dbh->errstr \n";
 	$sth_add_ho->bind_param(1, $args_ref->{'name'});
 	$sth_add_ho->bind_param(2, $args_ref->{'date'});
@@ -135,7 +135,7 @@ sub ho_del_name {
 	my $ho_ref = ho_get();
 	my $sth_del_ho = $dbh->prepare(
 	'DELETE FROM ns_holiday WHERE ns_holiday_name = ?');
-	$sth_del_ho->bind_param(1, $args_ref->{'name'}); 
+	$sth_del_ho->bind_param(1, $args_ref->{'name'});
 	my $return = $sth_del_ho->execute;
 	if (!defined $return) {
 		print "Unable to execute deletion query: $dbh->errstr \n";

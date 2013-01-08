@@ -13,7 +13,7 @@ use POSIX;
 # Generates entries for ns_shift.
 
 # Functionality
-# -Generate shifts in one hour blocks, only on Monday through Friday, 8-6, Saturday 12-6. 
+# -Generate shifts in one hour blocks, only on Monday through Friday, 8-6, Saturday 12-6.
 # -Skip holidays in ns_holiday.
 # -Should be smart enough to not need a specific day to start on, unlike current script which requires a monday.
 
@@ -28,7 +28,7 @@ use POSIX;
 
 # Subroutines
 # -Build list of holidays from entries in ns_holiday
-# -Loop to go through each valid hour for a day and create an appropriate number of shifts for each of hours based on the number of seats we have. 
+# -Loop to go through each valid hour for a day and create an appropriate number of shifts for each of hours based on the number of seats we have.
 # -Insert record into ns_shift
 
 my $db = "schedule";
@@ -51,9 +51,9 @@ if (!defined @ARGV) {
 	if (@ARGV == 3 && $ARGV[1] =~ /[A-Z]\w*/ && $ARGV[2] =~ /\d\d\d\d/) {
 		my $term_name = "$ARGV[1] $ARGV[2]";
 		my $sth_get_terms = $dbh->prepare(
-			"SELECT ns_term_name, ns_term_startdate, ns_term_enddate 
+			"SELECT ns_term_name, ns_term_startdate, ns_term_enddate
 			FROM ns_term
-			WHERE ns_term_name = ?") 
+			WHERE ns_term_name = ?")
 			or die "Couldn't prepare statement: " . $dbh->errstr;
 		$sth_get_terms->bind_param(1,$term_name);
 		$sth_get_terms->execute;
@@ -91,12 +91,12 @@ if (!defined @ARGV) {
 # Main subroutine of the script, started if it receives valid arguments from the user. Steps through each day between the start and end dates supplied and generates shifts for those days.
 sub buildshifts {
 	getholidays();
-	
+
 	# Set these times to the first and last *START* times you want shifts to have.
 	# They were set wrong before and shifts were being made for 6-7 PM and 5-6 PM
 	# on weekdays and weekends respectively -_- 10/21/2011
-	my %wd_hours = ('start', 8, 'end', 17); 
-	my %we_hours = ('start', 12, 'end', 16); 
+	my %wd_hours = ('start', 8, 'end', 17);
+	my %we_hours = ('start', 12, 'end', 16);
 	my $seats = 1;
 	# yyyy mm dd
 	my @c_date  = ($start_date[0],$start_date[1],$start_date[2]);
@@ -105,9 +105,9 @@ sub buildshifts {
 	my $db_date = sprintf("%4d-%02d-%02d",@c_date[0..2]);
 
 	# Test the difference between the current date and the end date, run until they are the same.
-	for (my $d_dd = 0; 
-	    $d_dd != -1; 
-	    $d_dd = Date::Calc::Delta_Days(@c_date,@end_date)) 
+	for (my $d_dd = 0;
+	    $d_dd != -1;
+	    $d_dd = Date::Calc::Delta_Days(@c_date,@end_date))
 	    {
 		if (exists $holidays{$db_date}) {
 			print "$c_date[1]-$c_date[2]-$c_date[0] is $holidays{$db_date}. Skipping.\n";
@@ -115,19 +115,19 @@ sub buildshifts {
 			print "$c_date[1]-$c_date[2]-$c_date[0] is a Sunday, skipping.\n";
 		} elsif (Date::Calc::Day_of_Week(@c_date) == 6) {
 			print "$c_date[1]-$c_date[2]-$c_date[0] is a Saturday.\n";
-			for ($c_time[0] = $we_hours{'start'}; 
-			    $c_time[0] <= $we_hours{'end'}; 
+			for ($c_time[0] = $we_hours{'start'};
+			    $c_time[0] <= $we_hours{'end'};
 			    (@c_date[0..2],@c_time[0..2])
 			    = Date::Calc::Add_Delta_DHMS(@c_date,@c_time,0,1,0,0)) {
-			    hourloop(@c_date,@c_time,$seats);	
+			    hourloop(@c_date,@c_time,$seats);
 			};
 		} else {
 			print "$c_date[1]-$c_date[2]-$c_date[0] is a weekday.\n";
-			for ($c_time[0] = $wd_hours{'start'}; 
-			    $c_time[0] <= $wd_hours{'end'}; 
+			for ($c_time[0] = $wd_hours{'start'};
+			    $c_time[0] <= $wd_hours{'end'};
 			    (@c_date[0..2],@c_time[0..2])
 			    = Date::Calc::Add_Delta_DHMS(@c_date,@c_time,0,1,0,0)) {
-			    hourloop(@c_date,@c_time,$seats);	
+			    hourloop(@c_date,@c_time,$seats);
 			};
 		};
 		(@c_date[0..2]) = Date::Calc::Add_Delta_Days(@c_date, 1);
@@ -146,7 +146,7 @@ sub hourloop {
     minute => $_[4],
     second => $_[5],
     seats => $_[6], );
-    my $hl_db_date = sprintf("%4d-%02d-%02d",@hl_args{'year','month','day'}); 
+    my $hl_db_date = sprintf("%4d-%02d-%02d",@hl_args{'year','month','day'});
     my $hl_db_time = sprintf("%02d:%02d:%02d",@hl_args{'hour','minute','second'});
     my $hl_db_end_time = sprintf("%02d:%02d:%02d",$hl_args{'hour'} + 1,@hl_args{'minute','second'});
     if (checkdate($hl_db_date,$hl_db_time) eq "noshift") {
@@ -193,8 +193,8 @@ sub checkdate {
     } elsif ($cd_count >= 1) {
 	return "shift";
     } else {
-	return "error"; 
-    };    
+	return "error";
+    };
 };
 
 # Build the hash of holidays. Uses the holiday date as its key.
@@ -203,10 +203,9 @@ sub getholidays {
 	$sth_get_holidays->execute;
 	while (my @ns_holiday_entry = $sth_get_holidays->fetchrow_array()) {
 		if ($ns_holiday_entry[2] == 1) {
-			$holidays{$ns_holiday_entry[1]} = $ns_holiday_entry[0];	
+			$holidays{$ns_holiday_entry[1]} = $ns_holiday_entry[0];
 		 	print "Got holiday $holidays{$ns_holiday_entry[1]} on $ns_holiday_entry[1]\n";
 		};
 	};
 	print "-----\n";
 };
-

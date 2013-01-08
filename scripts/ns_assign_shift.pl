@@ -8,7 +8,7 @@ use Getopt::Long;
 
 # ns_assign_shift.pl
 # Assigns shifts to a DOG for a given day of the week and hour or range of
-# hours. 
+# hours.
 
 # Some configuration items
 
@@ -30,16 +30,16 @@ dog_id		=>	0,
 term_name	=>	'',
 date_range	=>	'',
 desk_name	=>	'DOGHaus', # Default to DOGHaus
-desk_id		=>	0, 
+desk_id		=>	0,
 day_name	=>	'',
 day_id		=>	0,
 start_time	=>	{actual	=>	''},
 end_time	=>	{actual	=>	''}
 );
 
-GetOptions (	
-	'd=s' => \$args{'dog_name'}, 
-	't=s' => \$args{'term_name'}, 
+GetOptions (
+	'd=s' => \$args{'dog_name'},
+	't=s' => \$args{'term_name'},
 	'r=s' => \$args{'date_range'},
 	'l=s' => \$args{'desk_name'},
 	'n=s' => \$args{'day_name'},
@@ -83,7 +83,7 @@ if (!$args{'dog_name'}) {
 
 
 # Check for either a valid term name, or valid date range. If we received
-# neither or both, script should abort. 
+# neither or both, script should abort.
 
 my $terms_hash_ref = get_terms();
 
@@ -102,7 +102,7 @@ if (!$args{'term_name'} && !$args{'date_range'} || $args{'term_name'} && $args{'
 	if ($term_id eq "no match") {
 		print "No such term \"$args{term_name}\" exists in the database.\n";
 		$die_early = 1;
-	} else { 
+	} else {
 		print "$args{term_name} has id $term_id.\n";
 
 		# Get the details of the term we're working with
@@ -116,15 +116,15 @@ if (!$args{'term_name'} && !$args{'date_range'} || $args{'term_name'} && $args{'
 
 		# Populate the part of the start_date and end_date hashes
 		# Fetch the "long forms" from the database
-		($start_date{'yyyy-mm-dd'},$end_date{'yyyy-mm-dd'}) 
+		($start_date{'yyyy-mm-dd'},$end_date{'yyyy-mm-dd'})
 			= $sth_get_term_dates->fetchrow_array;
 
 		# Chunk out the long forms for later usage
-		@start_date{'yyyy','mm','dd'} 
-			= ($start_date{'yyyy-mm-dd'} 
+		@start_date{'yyyy','mm','dd'}
+			= ($start_date{'yyyy-mm-dd'}
 			=~ m/(\d\d\d\d)-(\d\d)-(\d\d)/);
-		@end_date{'yyyy','mm','dd'} 
-			= ($end_date{'yyyy-mm-dd'} 
+		@end_date{'yyyy','mm','dd'}
+			= ($end_date{'yyyy-mm-dd'}
 			=~ m/(\d\d\d\d)-(\d\d)-(\d\d)/);
 	};
 
@@ -138,18 +138,18 @@ if (!$args{'term_name'} && !$args{'date_range'} || $args{'term_name'} && $args{'
 			= $args{'date_range'} =~ m/(\d{4}-\d\d-\d\d)\s(\d{4}-\d\d-\d\d)/;
 
 		# Chunk out the long forms for later usage
-		@start_date{'yyyy','mm','dd'} 
-			= ($start_date{'yyyy-mm-dd'} 
+		@start_date{'yyyy','mm','dd'}
+			= ($start_date{'yyyy-mm-dd'}
 			=~ m/(\d\d\d\d)-(\d\d)-(\d\d)/);
-		@end_date{'yyyy','mm','dd'} 
-			= ($end_date{'yyyy-mm-dd'} 
+		@end_date{'yyyy','mm','dd'}
+			= ($end_date{'yyyy-mm-dd'}
 			=~ m/(\d\d\d\d)-(\d\d)-(\d\d)/);
-	};	
+	};
 };
 
 
-# Make sure the day, start time, and end time make sense 
-# Check that the day, start time, and end time given are in a valid 
+# Make sure the day, start time, and end time make sense
+# Check that the day, start time, and end time given are in a valid
 # format and represent valid values of their type (the name of a day of
 # the week, and an hour between 0000 and 2300 for the start and end
 # times).
@@ -161,7 +161,7 @@ if ($args{'day_name'} =~ m/\d/ && $args{'day_name'} > 0 && $args{'day_name'} < 8
 	$args{day_id} = 1;
 } elsif ($args{day_name} =~ m/tuesday/i) {
 	$args{day_id} = 2;
-} elsif ($args{day_name} =~ m/wednesday/i) { 
+} elsif ($args{day_name} =~ m/wednesday/i) {
 	$args{day_id} = 3;
 } elsif ($args{day_name} =~ m/thursday/i) {
 	$args{day_id} = 4;
@@ -203,21 +203,21 @@ if (!$args{'start_time'}{'actual'} || !$args{'end_time'}{'actual'}) {
 } elsif ($args{day_id} >= 1 && $args{day_id} <= 5) {
 	# Check against weekday start and end times
 	my %result;
-	@result{'dd','hh','mm','ss'} 
+	@result{'dd','hh','mm','ss'}
 		= Date::Calc::Delta_DHMS(2011,5,23,@{$args{'start_time'}}{'hh','mm'},0,
 		2011,5,23,$hours{'weekday_start'},0,0);
 	if ($result{'hh'} > 0) {
 		print "Specified start time is too early.\n";
 		$die_early = 1;
 	};
-	@result{'dd','hh','mm','ss'} 
+	@result{'dd','hh','mm','ss'}
 		= Date::Calc::Delta_DHMS(2011,5,23,@{$args{'start_time'}}{'hh','mm'},0,
 		2011,5,23,$hours{'weekday_end'},0,0);
 	if ($result{'hh'} < 1 ) {
 		print "Specified start time is too late.\n";
 		$die_early = 1;
 	};
-	@result{'dd','hh','mm','ss'} 
+	@result{'dd','hh','mm','ss'}
 		= Date::Calc::Delta_DHMS(2011,5,23,@{$args{'end_time'}}{'hh','mm'},0,
 		2011,5,23,$hours{'weekday_end'},0,0);
 	if ($result{'hh'} < 0) {
@@ -227,21 +227,21 @@ if (!$args{'start_time'}{'actual'} || !$args{'end_time'}{'actual'}) {
 } elsif ($args{day_id} == 6) {
 	# Check against weekend start and end times
 	my %result;
-	@result{'dd','hh','mm','ss'} 
+	@result{'dd','hh','mm','ss'}
 		= Date::Calc::Delta_DHMS(2011,5,23,@{$args{'start_time'}}{'hh','mm'},0,
 		2011,5,23,$hours{'weekend_start'},0,0);
 	if ($result{'hh'} > 0) {
 		print "Specified start time is too early.\n";
 		$die_early = 1;
 	};
-	@result{'dd','hh','mm','ss'} 
+	@result{'dd','hh','mm','ss'}
 		= Date::Calc::Delta_DHMS(2011,5,23,@{$args{'start_time'}}{'hh','mm'},0,
 		2011,5,23,$hours{'weekend_end'},0,0);
 	if ($result{'hh'} < 1 ) {
 		print "Specified start time is too late.\n";
 		$die_early = 1;
 	};
-	@result{'dd','hh','mm','ss'} 
+	@result{'dd','hh','mm','ss'}
 		= Date::Calc::Delta_DHMS(2011,5,23,@{$args{'end_time'}}{'hh','mm'},0,
 		2011,5,23,$hours{'weekend_end'},0,0);
 	if ($result{'hh'} < 0) {
@@ -254,9 +254,9 @@ if (!$args{'start_time'}{'actual'} || !$args{'end_time'}{'actual'}) {
 	$die_early = 1;
 };
 
-if (!$die_early) { 
+if (!$die_early) {
 	print "The given start and end times ($args{'start_time'}{'actual'} and $args{'end_time'}{'actual'}) are within acceptable ranges.\n";
-}; 
+};
 
 
 # Make sure a valid desk has been specified, check against output of get_desks()
@@ -271,7 +271,7 @@ if ($args{desk_id} eq "no match") {
 
 
 # If any of the arguments were bogus, die.
-if ($die_early) { 
+if ($die_early) {
 	print "Aborting.\n";
 	exit;
 } else {
@@ -281,12 +281,12 @@ if ($die_early) {
 
 ### Main Loop ###
 
-# If the first day of the term is after today, use it as the start date 
-# for the assignment operation. If it is after today use today's date 
+# If the first day of the term is after today, use it as the start date
+# for the assignment operation. If it is after today use today's date
 # as the first day.
 
 
-# Delta_Days(yyyy,mm,dd,yyyy,mm,dd) returns positive if date 1 is 
+# Delta_Days(yyyy,mm,dd,yyyy,mm,dd) returns positive if date 1 is
 # BEFORE date 2, negative if date 1 is AFTER date 2. The return value
 # is the difference between the two dates measured in days.
 
@@ -295,18 +295,18 @@ my %current_date = (
 	'mm'	=> $start_date{'mm'},
 	'dd'	=> $start_date{'dd'}, );
 # Enter loop to step through each day of the term
-while (Date::Calc::Delta_Days(@current_date{'yyyy','mm','dd'},@end_date{'yyyy','mm','dd'}) 
+while (Date::Calc::Delta_Days(@current_date{'yyyy','mm','dd'},@end_date{'yyyy','mm','dd'})
 	>= 0) {
 	$current_date{'yyyy-mm-dd'} = sprintf("%4d-%02d-%02d",@current_date{'yyyy','mm','dd'});
 	# If a day matches the day to be assigned...
-	if (Date::Calc::Day_of_Week(@current_date{'yyyy','mm','dd'}) == $args{'day_id'}) { 
+	if (Date::Calc::Day_of_Week(@current_date{'yyyy','mm','dd'}) == $args{'day_id'}) {
 		my $current_hour = $args{'start_time'}{'hh'};
 		# Enter loop to step through the time range in one hour increments
 		while ($current_hour < $args{'end_time'}{'hh'}) {
 			# For each hour...
-			# Try to grab a shift entry for the specified 
+			# Try to grab a shift entry for the specified
 			# date and time, if one doesn't exist move on.
-			my $shift_id 
+			my $shift_id
 				= get_shift_id(
 				$current_date{'yyyy-mm-dd'},
 				$current_hour,
@@ -314,8 +314,8 @@ while (Date::Calc::Delta_Days(@current_date{'yyyy','mm','dd'},@end_date{'yyyy','
 			print "Got shift ID: $shift_id\n";
 			if ($shift_id != 0) {
 				# If a shift entry exists...
-				# Check and see if an "active" 
-				# assignment already exists for the 
+				# Check and see if an "active"
+				# assignment already exists for the
 				# specified CAT using check_shift()
 				if (check_shift(
 					$args{'dog_id'},
@@ -324,7 +324,7 @@ while (Date::Calc::Delta_Days(@current_date{'yyyy','mm','dd'},@end_date{'yyyy','
 					# If one does, mention this and step to the next hour
 					print "Active shift assignment already exists for $current_date{'yyyy-mm-dd'} starting at $current_hour, skipping.\n";
 				} else {
-					# If one doesn't, call new_assignment() 
+					# If one doesn't, call new_assignment()
 					# and create a new shift assignment
 					new_assignment(
 						$args{'dog_id'},
@@ -340,7 +340,7 @@ while (Date::Calc::Delta_Days(@current_date{'yyyy','mm','dd'},@end_date{'yyyy','
 		# If the day doesn't match the day to be assigned step to the next day
 	};
 	# ($year,$month,$day) = Add_Delta_Days($year,$month,$day, $Dd);
-	@current_date{'yyyy','mm','dd'} 
+	@current_date{'yyyy','mm','dd'}
 		= Date::Calc::Add_Delta_Days(@current_date{'yyyy','mm','dd'},1);
 };
 
@@ -350,14 +350,14 @@ while (Date::Calc::Delta_Days(@current_date{'yyyy','mm','dd'},@end_date{'yyyy','
 # Args: date (yyyy-mm-dd), shift start (hh), shift end (hh)
 sub get_shift_id {
 
-	if (@_ != 3) { 
+	if (@_ != 3) {
 		print "get_shift_id() was passed an invalid number of arguments! (" . @_ . ").\n";
 	};
 	my %gsi_args;
 	@gsi_args{'date','start','end'} = @_;
 	$gsi_args{'start'} = sprintf("%02d:00:00",$gsi_args{'start'});
 	$gsi_args{'end'} = sprintf("%02d:00:00",$gsi_args{'end'});
-	
+
 	# Query to match *the* (there should only be one!) shift entry for the
 	# given date and start and end times.
 	my $sth_gsi = $dbh->prepare('
@@ -390,7 +390,7 @@ sub get_shift_id {
 		foreach my $id (@shift_ids) {
 			print "$id\n";
 		};
-		exit; 
+		exit;
 
 	# No entries probably just means that shifts for the term that
 	# assignment is being attempted for have not been generated. Maybe
@@ -413,9 +413,9 @@ sub new_assignment {
 		print "new_assignment() was passed an invalid number of arguments! (" . @_ . ").\n";
 		exit;
 	};
-	my %na_args; 
+	my %na_args;
 	@na_args{'dog_id','shift_id','desk_id'} = @_;
-	
+
 	my $sth_add_assignment = $dbh->prepare('
 		INSERT INTO `ns_shift_assigned` (ns_cat_id,ns_shift_id,ns_desk_id,ns_sa_assignedtime)
 		VALUES (?,?,?,?)
@@ -434,13 +434,13 @@ sub new_assignment {
 # "Active" shift assignments are those for which the is not a corresponding entry in ns_shift_dropped
 # Args: 'dog_id', shift_id, 'desk_id'
 
-sub check_shift { 
+sub check_shift {
 
 	if (@_ != 3) {
 		print "check_shift() was passed an invalid number of arguments! (" . @_ . ").\n";
 		exit;
 	};
-	my %cs_args; 
+	my %cs_args;
 	@cs_args{'dog_id','shift_id','desk_id'} = @_;
 
 	# Get entries from ns_shift_assigned which match the criteria for
@@ -451,16 +451,16 @@ sub check_shift {
 	WHERE sa.ns_shift_id = ?
 	AND sa.ns_cat_id = ?
 	AND sa.ns_desk_id = ?
-	AND NOT EXISTS 
-		(SELECT * 
-		FROM ns_shift_dropped as sd 
+	AND NOT EXISTS
+		(SELECT *
+		FROM ns_shift_dropped as sd
 		WHERE sd.ns_sa_id = sa.ns_sa_id)')
 	or die "Couldn't prepare statement: " . $dbh->errstr;
 	$sth_cs->bind_param(1,$cs_args{'shift_id'});
 	$sth_cs->bind_param(2,$cs_args{'dog_id'});
 	$sth_cs->bind_param(3,$cs_args{'desk_id'});
 	$sth_cs->execute;
-	
+
 	# Dump active assignment IDs into an array.
 	my @assignment_ids;
 	while (my @cs_result = $sth_cs->fetchrow_array()) {
@@ -471,7 +471,7 @@ sub check_shift {
 			exit;
 		};
 	};
-	
+
 	# If we got more than one match something is really off in the DB and
 	# needs to be checked out before anything else happens.
 	if (@assignment_ids > 1) {
@@ -479,7 +479,7 @@ sub check_shift {
 		foreach my $id (@assignment_ids) {
 			print "$id\n";
 		};
-		exit; 
+		exit;
 
 	# If we found an active assignment return its id.
 	} elsif (@assignment_ids == 1) {
@@ -508,7 +508,7 @@ sub get_id_from_value {
 		if ($hash_ref->{$id} =~ m/^$search_value$/i) {
 			$return_id = $id;
 			last;
-		};		
+		};
 	};
 	if (defined $return_id) {
 		return $return_id;
@@ -524,7 +524,7 @@ sub get_id_from_value {
 # desk_id => desk_name
 #
 sub get_desks {
-	my $sth_get_desks = $dbh->prepare(' 
+	my $sth_get_desks = $dbh->prepare('
 	SELECT ns_desk_id, ns_desk_shortname
 	FROM ns_desk')
 	or die "Couldn't prepare statement: " . $dbh->errstr;
@@ -543,7 +543,7 @@ sub get_desks {
 # cat_id => cat_uname
 #
 sub get_dogs {
-	# This sub might be called with a reference to an array containing the DOG 
+	# This sub might be called with a reference to an array containing the DOG
 	# types to fetch, if it is we need to handle that
 	if (defined $_[0]) {
 		my $types_ref = $_[0];
@@ -568,7 +568,7 @@ sub get_dogs {
 	# If we don't get a list of CAT types to grab just get everyone
 	} else {
 		my $sth_get_dogs = $dbh->prepare('
-		SELECT ns_cat_id, ns_cat_uname 
+		SELECT ns_cat_id, ns_cat_uname
 		FROM ns_cat')
 		or die "Couldn't prepare statement: " . $dbh->errstr;
 		$sth_get_dogs->execute;
@@ -577,17 +577,17 @@ sub get_dogs {
 			$return_hash{$ns_cat_entry[0]} = $ns_cat_entry[1];
 		};
 		return \%return_hash;
-	}; 
+	};
 };
 
-# Get a hash of term names keyed to their id 
+# Get a hash of term names keyed to their id
 # Args: None
 #
 # Output hash format:
 # term_id => term_name
 #
 sub get_terms {
-	my $sth_get_terms = $dbh->prepare(' 
+	my $sth_get_terms = $dbh->prepare('
 	SELECT ns_term_id, ns_term_name
 	FROM ns_term')
 	or die "Couldn't prepare statement: " . $dbh->errstr;

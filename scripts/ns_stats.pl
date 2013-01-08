@@ -44,7 +44,7 @@ my $dbh = DBI->connect ("DBI:mysql:database=$db:host=$host",$user,$password) or 
 # Fetch shifts for the given day.
 my $shifts_r = get_shifts_for_day($datestr);
 
-# Collect all log entries for the given day. 
+# Collect all log entries for the given day.
 # Store the cat id, on and off time, and machine name for these shifts.
 my $logs_r = get_logs_for_day($datestr);
 
@@ -56,7 +56,7 @@ my $logs_r = get_logs_for_day($datestr);
 foreach my $shift (@{$shifts_r}) {
 
 	my $shift_id = $shift->{'ns_shift_id'};
-	my $shift_start = $shift->{'ns_shift_start_time'}; 
+	my $shift_start = $shift->{'ns_shift_start_time'};
 	my $shift_end = $shift->{'ns_shift_end_time'};
 
 	print $shift_id . " " . $datestr . ": " . $shift_start . " - " . $shift_end . "\n";
@@ -68,8 +68,8 @@ foreach my $shift (@{$shifts_r}) {
 		my $le_on = $log_entry->{'ns_li_ontime'};
 		my $le_off = $log_entry->{'ns_li_offtime'};
 		# Set the location based on which machine the log entry was
-		# from. Manually created log entries should be considered 
-		# universal, this is effected by adding manual entries to the 
+		# from. Manually created log entries should be considered
+		# universal, this is effected by adding manual entries to the
 		# ranges for both the doghaus and kennel so they will come up
 		# in comparisons against shifts for either location.
 		my @le_locations = ();
@@ -90,14 +90,14 @@ foreach my $shift (@{$shifts_r}) {
 		# ranges[[range1start(hh:mm),range1end],[range2start,range2end]..etc.]
 
 		# Designate the start time of the first entry as the beginning of the
-		# range, or if the log entry's start time is before the 
+		# range, or if the log entry's start time is before the
 		# shift's start time then use the shift's start time as the beginning
-		# of the range. Designate the end of the range as the end time of the 
+		# of the range. Designate the end of the range as the end time of the
 		# log entry if it is before the end time of the shift. If it is equal
 		# to or after the end time of the shift, use the end time of the shift
 		# as the end of the range.
 
-		# For each entry thereafter if the start time of the log entry is 
+		# For each entry thereafter if the start time of the log entry is
 		# before or equal to the end of the current range, set the end of the
 		# current range to be the end time of the log entry if it is before
 		# the end time of the shift, or if it is after the end of the shift use
@@ -112,24 +112,24 @@ foreach my $shift (@{$shifts_r}) {
 
 		# If the end time of the current range is equal to the end time of the
 		# shift store the range and break without iterating over any more log entries.
-		
+
 		# If the log entry processed on this iteration is the last of the log
 		# entries, then store the current range and exit the loop.
 
-	
+
 		# (cat_id -> location -> [ranges])
 		# ranges[[range1start(hh:mm),range1end],[range2start,range2end]..etc.]
-		
+
 		foreach my $le_location (@le_locations) {
 			# Ignore out of scope log entries
 			if ($le_off lt $shift_start || $le_on gt $shift_end) {
 				next;
 			};
 
-			# if a range for the given cat and location exists	
+			# if a range for the given cat and location exists
 			if ($log_ranges{$le_cat_id}{$le_location}) {
 				# add to the existing range or create a new one as necessary
-				# if log start time later than range end time 
+				# if log start time later than range end time
 				if ($log_ranges{$le_cat_id}{$le_location}[$#{$log_ranges{$le_cat_id}{$le_location}}][1] lt $le_on) {
 		 			# add new range
 					# range start = log start
@@ -147,7 +147,7 @@ foreach my $shift (@{$shifts_r}) {
 					# skip to next entry
 					next;
 				} else {
-					# range end time earlier than log end time 
+					# range end time earlier than log end time
 					# modify existing range entry
 					@{$log_ranges{$le_cat_id}{$le_location}[$#{$log_ranges{$le_cat_id}{$le_location}}]}[1] = $le_off;
 				};
@@ -172,7 +172,7 @@ foreach my $shift (@{$shifts_r}) {
 				};
 			};
 		};
-		
+
 	};
 
 	# Calculate how many minutes are in the shift being checked against, store this
@@ -189,7 +189,7 @@ foreach my $shift (@{$shifts_r}) {
 	print "Shift duration: " . $shift_duration{'mm'} . " minutes.\n";
 
 
-	# Collect all assignments for the shift, store assignment ID, desk ID, 
+	# Collect all assignments for the shift, store assignment ID, desk ID,
 	# and cat ID for each assignment.
 	my $shift_assignments_r = get_assignments_by_shift($shift_id);
 
@@ -204,10 +204,10 @@ foreach my $shift (@{$shifts_r}) {
 		if ($assignment_r->{'ns_desk_id'} == 2) {
 			print "Location: DOGHaus\n";
 			$a_location = "dh";
-		} elsif ($assignment_r->{'ns_desk_id'} == 3) { 
+		} elsif ($assignment_r->{'ns_desk_id'} == 3) {
 			print "Location: Kennel\n";
 			$a_location = "kennel";
-		} else { 
+		} else {
 			print "Assignment $assignment_r->{'ns_sa_id'} was made to an invalid desk id ($assignment_r->{'ns_desk_id'}), skipping.\n";
 			next;
 		};
@@ -229,7 +229,7 @@ foreach my $shift (@{$shifts_r}) {
 							my @st = $r_times->[0] =~ m/(\d\d):(\d\d):\d\d/;
 							my @et = $r_times->[1] =~ m/(\d\d):(\d\d):\d\d/;
 
-							@coverage{'yy','mo','dd','hh','mm','ss'} 
+							@coverage{'yy','mo','dd','hh','mm','ss'}
 								= Date::Calc::N_Delta_YMDHMS(2011,10,26,@st[0..1],0,2011,10,26,@et[0..1],0);
 							$coverage{'mm'} += ($coverage{'hh'} * 60);
 							print "Logged coverage: " . $coverage{'mm'} . " minutes.\n";
@@ -247,7 +247,7 @@ foreach my $shift (@{$shifts_r}) {
 			};
 		};
 
-	}; 
+	};
 
 
 		# %log_ranges
@@ -261,12 +261,12 @@ foreach my $shift (@{$shifts_r}) {
 					# Determine difference between start and end of range in minutes
 					# Increment range in minutes variable by the difference
 
-		# Compare the actual coverage against that required by the shift. 
+		# Compare the actual coverage against that required by the shift.
 		# Get the difference between $shift_duration{'mm'} and the range in minutes variable
 
 		# Rules:
-		# -10 minute "grace" period. 
-		# -If more than 10 minutes of a shift are missed, count the whole shift as 
+		# -10 minute "grace" period.
+		# -If more than 10 minutes of a shift are missed, count the whole shift as
 		#  missed.
 
 		# Store the result of this comparison
@@ -281,8 +281,8 @@ foreach my $shift (@{$shifts_r}) {
 sub get_shifts_for_day {
 	my $date = $_[0];
 
-	# The data we need are the shift id, shift start time, and shift end 
-	# time of all shifts falling on $date. The table ns_shift contains 
+	# The data we need are the shift id, shift start time, and shift end
+	# time of all shifts falling on $date. The table ns_shift contains
 	# these in the ns_shift_id, ns_shift_start_time, and ns_shift_end_time
 	# columns.
 	my $sth_gsd = $dbh->prepare ('
@@ -293,11 +293,11 @@ sub get_shifts_for_day {
 		or die "Couldn't prepare statement: " . $dbh->errstr;
 	$sth_gsd->bind_param (1,$date);
 	$sth_gsd->execute or die "Couldn't execute statement: " . $sth_gsd->errstr;
-	
+
 	# From CPAN Perl DBI documentation:
 
-	# An alternative to fetchrow_arrayref. Fetches the next row of data and 
-	# returns it as a reference to a hash containing field name and field 
+	# An alternative to fetchrow_arrayref. Fetches the next row of data and
+	# returns it as a reference to a hash containing field name and field
 	# value pairs. Null fields are returned as undef values in the hash.
 
 	# The keys of the hash are the same names returned by $sth->{$name}. If
@@ -322,12 +322,12 @@ sub get_shifts_for_day {
 
 
 # Get log entries for a given day
-# Args: string date 
+# Args: string date
 sub get_logs_for_day {
 	my $gle_date = $_[0];
 
 	my $sth_gle = $dbh->prepare ('
-		SELECT ns_cat_id, ns_li_ontime, ns_li_offtime, ns_li_machine 
+		SELECT ns_cat_id, ns_li_ontime, ns_li_offtime, ns_li_machine
 		FROM ns_log_item
 		WHERE ns_li_date = ?
 		')
@@ -335,12 +335,12 @@ sub get_logs_for_day {
 
 	$sth_gle->bind_param(1,$gle_date);
 	$sth_gle->execute or die "Couldn't execute statement: " . $sth_gle->errstr;
-	
+
 	my @log_entries;
 	while (my $result_r = $sth_gle->fetchrow_hashref()) {
 		push (@log_entries,$result_r);
 	};
-	
+
 	return \@log_entries;
 };
 
@@ -351,7 +351,7 @@ sub get_assignments_by_shift {
 	my $gabs_shift_id = $_[0];
 
 	my $sth_gabs = $dbh->prepare ('
-		SELECT ns_sa_id, ns_cat_id, ns_desk_id 
+		SELECT ns_sa_id, ns_cat_id, ns_desk_id
 		FROM `ns_shift_assigned`
 		WHERE `ns_shift_id` = ?
 		')
@@ -365,5 +365,5 @@ sub get_assignments_by_shift {
 		push (@assignments,$result_r);
 	};
 
-	return \@assignments;	
+	return \@assignments;
 };
