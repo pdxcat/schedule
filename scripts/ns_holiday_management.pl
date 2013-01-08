@@ -168,7 +168,7 @@ sub ho_del_date {
 sub ho_get {
 	# Select all holiday
 	# Return a hash reference containing the holidays keyed to their id
-	my $sth_get_hos = $dbh->prepare('SELECT * FROM ns_holiday') 
+	my $sth_get_hos = $dbh->prepare('SELECT * FROM ns_holiday ORDER BY ns_holiday_date')
 	or die "Couldn't prepare statement: " . $dbh->errstr;
 	$sth_get_hos->execute;
 	return $sth_get_hos->fetchall_hashref('ns_holiday_id');
