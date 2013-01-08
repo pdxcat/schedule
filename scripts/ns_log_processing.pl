@@ -116,7 +116,7 @@ sub process_logs {
 	#morbid   pts/0        :0.0             Fri Oct 21 11:22 - 11:26  (00:03)    
 	#morbid   pts/0        :0.0             Fri Oct 21 10:12 - 11:22  (01:10)    
 	#morbid   tty8         :0               Fri Oct 21 10:10 - 11:26  (01:15)  
-	foreach (`ssh -q schedule\@scissors.cat.pdx.edu \'last 1 2 3 4 5 6 7 8 9 10 | grep \"$date\" | grep -v wtmp\'`){
+	foreach (`ssh -q schedule\@scissors.cat.pdx.edu \'last | grep \"$date\" | grep -v wtmp\ | grep \":0\" '`){
 	  /^(.+?)\s+.+?\s+.+?\s+.+?\s+.+?\s+.+?\s+(.+?)\s+.+?\s+(.+?)\s+(.+)\s/;
 	  if($3 eq "logged"){
 		push @strays, "$1 $2 $3 scissors";
