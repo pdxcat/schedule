@@ -77,7 +77,7 @@ if ($username) {
 
 } else {
   // login failure
-  echo "Fail.<br />";
+  echo "<p>Fail.</p>";
 };
 
 ?>
@@ -247,15 +247,13 @@ function write_dated_calendar_cell(&$current_date,&$gct_shifts) {
       };
 
       if ($shift['ns_desk_shortname'] == "Kennel") {
-        echo "<span class=\"shift_kn\">";
+        echo "<div class=\"shift_kn\">";
         echo $shift['ns_shift_start_time'] . " - " . $shift['ns_shift_end_time'];
-        echo "<br />";
-        echo "</span>";
+        echo "</div>\n";
       } elseif ($shift['ns_desk_shortname'] == "DOGHaus") {
-        echo "<span class=\"shift_dh\">";
+        echo "<div class=\"shift_dh\">";
         echo $shift['ns_shift_start_time'] . " - " . $shift['ns_shift_end_time'];
-        echo "<br />";
-        echo "</span>";
+        echo "</div>";
       };
       echo "</span>\n";
     };

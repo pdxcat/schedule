@@ -41,7 +41,7 @@ if ($username) {
 
 } else {
 	// login failure
-	echo "Fail.<br />";
+	echo "<p>Fail.</p>";
 };
 
 ?>
@@ -75,9 +75,7 @@ function generate_weekly_table($username, $base_date, &$dbh) {
 	$gwt_shifts = get_shifts_for_all($first_of_week,$last_of_week,$dbh);
 
 	// Generate schedule table from that info.
-	echo "Schedule for " . date_format($first_of_week,'Y-m-d') . " to " . date_format($last_of_week,'Y-m-d');
-	echo "<br />";
-	echo "<br />";
+	echo "<p>Schedule for " . date_format($first_of_week,'Y-m-d') . " to " . date_format($last_of_week,'Y-m-d') . "</p>\n";
 	write_table_header();
 
 	// Loop over each hour in the work day
@@ -141,15 +139,13 @@ function write_table_cell(&$date, &$hour, &$gwt_shifts) {
 				if ($time_key == $start_time) {
 					foreach ($time_val as $assignment) {
 						if ($assignment['ns_desk_shortname'] == "Kennel") {
-							echo "<span class=\"shift_kn\">";
+							echo "<div class=\"shift_kn\">";
 							echo $assignment['ns_cat_uname'];
-							echo "<br />";
-							echo "</span>";
+							echo "</div>";
 						} elseif ($assignment['ns_desk_shortname'] == "DOGHaus") {
-							echo "<span class=\"shift_dh\">";
+							echo "<div class=\"shift_dh\">";
 							echo $assignment['ns_cat_uname'];
-							echo "<br />";
-							echo "</span>";
+							echo "</div>";
 						};
 					};
 				};
@@ -170,7 +166,6 @@ function write_table_footer() {
 	echo "<input type=\"submit\" name=\"operation\" value=\"Current Week\">\n";
 	echo "<input type=\"submit\" name=\"operation\" value=\"Next Week\">\n";
 	echo "</form>\n";
-	echo "<br />\n";
 	echo "</div>\n";
 
 	echo "<br />";

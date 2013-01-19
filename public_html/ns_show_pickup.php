@@ -76,7 +76,7 @@ if ($username) {
 
 } else {
 	// login failure
-	echo "Fail.<br />";
+	echo "<p>Fail.</p>";
 };
 
 ?>
@@ -254,15 +254,13 @@ function write_dated_calendar_cell(&$current_date,&$gct_shifts) {
 			};
 
 			if ($shift['ns_desk_shortname'] == "Kennel") {
-				echo "<span class=\"shift_kn\">";
+				echo "<div class=\"shift_kn\">";
 				echo $shift['ns_shift_start_time'] . " - " . $shift['ns_shift_end_time'];
-				echo "<br />";
-				echo "</span>";
+				echo "</div>";
 			} elseif ($shift['ns_desk_shortname'] == "DOGHaus") {
-				echo "<span class=\"shift_dh\">";
+				echo "<div class=\"shift_dh\">";
 				echo $shift['ns_shift_start_time'] . " - " . $shift['ns_shift_end_time'];
-				echo "<br />";
-				echo "</span>";
+				echo "</div>";
 			};
 			echo "</span>";
 		};
@@ -281,13 +279,9 @@ function write_blank_calendar_cell() {
 
 
 function write_calendar_header( &$base_date ) {
-	echo "
-	<div class=\"cal_month\">" .
-	date_format($base_date,'F Y')
-	. "</div><br />";
+	echo "<p class=\"cal_month\">" . date_format($base_date,'F Y') . "</p>";
 
-	echo "
-		<table class=\"shift_calendar\">
+	echo "<table class=\"shift_calendar\">
 		<tr>
 			<th>Sunday</th>
 			<th>Monday</th>
@@ -309,14 +303,12 @@ function write_calendar_footer( &$base_date ) {
 	echo "<input type=\"submit\" name=\"operation\" value=\"Next Month\">";
 	echo "<br />";
 	echo "<input type=\"submit\" name=\"operation\" value=\"Pick Up Selected Shifts\">";
-	echo "</form>";
-	echo "<br />";
 	echo "</div>";
+	echo "</form>";
 
-	echo "<br />";
-	echo "Shift key: <br />";
+	echo "<p>Shift key: <br />";
 	echo "<span class=\"shift_dh\">DOGHaus</span><br />";
-	echo "<span class=\"shift_kn\">Kennel</span><br />";
+	echo "<span class=\"shift_kn\">Kennel</span></p>";
 };
 // End of shift calendar functions.
 
@@ -385,4 +377,3 @@ function update_session_shifts() {
 };
 
 ?>
-

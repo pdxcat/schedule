@@ -36,7 +36,7 @@ if ($username) {
   };
 } else {
   // login failure
-  echo "Fail.<br />";
+  echo "<p>Fail.</p>";
 };
 ?>
 

@@ -9,13 +9,13 @@ $username= $_SERVER[PHP_AUTH_USER];
 
 echo "<table border=1>
 	<tr>\n
-	<td></td>\n
-	<td>Mon</td>\n
-	<td>Tues</td>\n
-	<td>Wed</td>\n
-	<td>Thurs</td>\n
-	<td>Fri</td>\n
-	<td>Sat</td>\n
+	<th></th>\n
+	<th>Mon</th>\n
+	<th>Tues</th>\n
+	<th>Wed</th>\n
+	<th>Thurs</th>\n
+	<th>Fri</th>\n
+	<th>Sat</th>\n
 	</tr>";
 
 # Sets host, user, password variables
@@ -45,8 +45,9 @@ for($i=8; $i<=17;$i++){
 	};
 	echo "</tr>\n";
 };
-echo "</table><p>Shift Preference: ";
+echo "</table>\n";
 
+echo "<p>Shift Preference: ";
 $query = "SELECT schedpref FROM humanInfo WHERE uname=\"". $username ."\"";
 $result = mysql_query($query);
 $row = mysql_fetch_row($result);
@@ -57,9 +58,8 @@ if($row[0] == "f"){
 }else{
 	echo "No Shift Length Preference";
 };
-
-echo "<br />";
-echo "<a href=\"ns_show_schedule.php\">Return to your schedule</a><br />";
-
+echo "</p>\n";
 ?>
+
+<p><a href=\"ns_show_schedule.php\">Return to your schedule</a></p>
 </body></html>
