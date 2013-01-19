@@ -1,41 +1,10 @@
 <?php
-require('ns_common.php');
-check_session();
-?>
+  require('ns_common.php');
+  check_session();
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" 
-"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-
-<html>
-
-<head>
-
-<?php
-$username = $_SESSION['username'];
-echo "<title>The Schedule ($username)</title>";
-?>
-
-<link rel="stylesheet" type="text/css" href="ns_general.css" media="screen" />
-
-</head>
-
-<body>
-
-<div id="page-container">
-
-<div id="top-nav">
-<?php
-include 'ns_top_navigation.php';
-?>
-</div>
-
-<div id="content">
-<?php
+  include('header.php');
 
 if ($username) {
-	printf("Logged in as %s. <br />", $username);
-	echo "<br />";
-	
 	// Determine the date to display based on POST operation and SESSION
 	// parameters.
 	if ($_POST['operation'] == "Current Week") {
@@ -54,7 +23,7 @@ if ($username) {
 		// with the last viewed date - 1 week.
 		$base_date = date_create($_SESSION['last_viewed_date']);
 		date_modify($base_date, '-1 week');
-	
+
 	} else {
 		// Default to current date.
 		$base_date = date_create();
@@ -63,9 +32,9 @@ if ($username) {
 	// Once we've figured out the date to display based on, update the last
 	// viewed date in SESSION parameters.
 	$_SESSION['last_viewed_date'] = date_format($base_date, 'Y-m-d');
-	
+
 	$dbh = start_db();
-	
+
 	generate_weekly_table($username, $base_date, $dbh);
 
 	$dbh = null;
@@ -125,7 +94,7 @@ function generate_weekly_table($username, $base_date, &$dbh) {
 				echo sprintf("%02d", $hour) . "00";
 				echo "</td>";
 			};
-	
+
 			write_table_cell($current_date, $hour, $gwt_shifts);
 
 			// If day is Saturday, cap off the row after writing out the
@@ -133,7 +102,7 @@ function generate_weekly_table($username, $base_date, &$dbh) {
 			if (date_format($current_date,'w') == 6) {
 				echo "</tr>";
 			};
-			
+
 			// Hackish shit necessary due to the hackishness of the
 			// date_diff function I'm using as a stand in for the
 			// real thing since we're running ancient ass PHP.
@@ -149,7 +118,7 @@ function generate_weekly_table($username, $base_date, &$dbh) {
 
 
 function write_table_header() {
-	echo "<table class=\"shift_weekly\">"; 
+	echo "<table class=\"shift_weekly\">";
 	echo "<tr>";
 	echo "<th class=\"hour_label\"></th>";
 	echo "<th class=\"day_label\">Monday</th>";
@@ -194,8 +163,8 @@ function write_table_cell(&$date, &$hour, &$gwt_shifts) {
 
 function write_table_footer() {
 	echo "</table>";
-	
-	echo "<div id=\"cal_buttons\">\n";	
+
+	echo "<div id=\"cal_buttons\">\n";
 	echo "<form action=\"index.php\" method=\"post\">\n";
 	echo "<input type=\"submit\" name=\"operation\" value=\"Previous Week\">\n";
 	echo "<input type=\"submit\" name=\"operation\" value=\"Current Week\">\n";
@@ -203,7 +172,7 @@ function write_table_footer() {
 	echo "</form>\n";
 	echo "<br />\n";
 	echo "</div>\n";
-	
+
 	echo "<br />";
 	echo "Shift key: <br />";
 	echo "<span class=\"shift_dh\">DOGHaus</span><br />";
