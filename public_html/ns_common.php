@@ -156,7 +156,7 @@ function get_shifts_for_all( &$start_date, &$end_date, &$dbh ) {
     $return_array
       ['ns_shift_date']
       ['ns_shift_start_time']
-      ['ns_cat_uname']
+      ['name']
       ['css_class']
   */
 
@@ -164,7 +164,7 @@ function get_shifts_for_all( &$start_date, &$end_date, &$dbh ) {
   $gsfa_end_date = date_format($end_date, 'Y-m-d');
 
   $query = "
-    SELECT s.ns_shift_date, s.ns_shift_start_time, c.ns_cat_uname, d.css_class
+    SELECT s.ns_shift_date, s.ns_shift_start_time, c.ns_cat_handle, d.css_class
     FROM ns_shift as s, ns_shift_assigned as a, ns_desk as d, ns_cat as c
     WHERE s.ns_shift_date >= ?
     AND s.ns_shift_date <= ?
@@ -174,7 +174,7 @@ function get_shifts_for_all( &$start_date, &$end_date, &$dbh ) {
     AND a.ns_sa_id NOT IN (
       SELECT ns_sa_id
       FROM ns_shift_dropped)
-    ORDER BY d.css_class,s.ns_shift_date,s.ns_shift_start_time,c.ns_cat_uname
+    ORDER BY d.css_class,s.ns_shift_date,s.ns_shift_start_time,c.ns_cat_handle
     ";
 
   $sth = $dbh->prepare($query);
@@ -190,7 +190,7 @@ function get_shifts_for_all( &$start_date, &$end_date, &$dbh ) {
   $shifts = array();
   while ($row = $sth->fetch()) {
     $shifts[$row['ns_shift_date']][$row['ns_shift_start_time']][] = array(
-      'ns_cat_uname' => $row['ns_cat_uname'],
+      'name' => $row['ns_cat_handle'],
       'css_class' => $row['css_class']);
   };
 
@@ -208,7 +208,6 @@ function get_shifts_to_pickup( $gsp_id, &$dbh ) {
     $return_array
       ['ns_shift_date']
       ['ns_shift_start_time']
-      ['ns_cat_uname']
       ['css_class']
 
     We only want to fetch shifts on or after today's date, so we need to
@@ -429,6 +428,52 @@ function get_shifts_from_sd_ids( $sd_ids, &$dbh ) {
   return $shifts;
 };
 
+function get_cat_handle_by_username( $username, &$dbh ) {
+  $cat = get_cat_by_username($username, $dbh);
+  return $cat['handle'];
+}
+
+function get_cat_by_username( $username, &$dbh ) {
+  $id = get_cat_id($username, $dbh);
+  return get_cat_by_id($id, $dbh);
+}
+
+function get_cat_by_id( $id, &$dbh ) {
+  /*  Retrieve cat given their DB ID number.
+      Returns: [ 'username' => x, 'handle' => x ]
+  */
+
+  $query = "SELECT ns_cat_uname, ns_cat_handle FROM ns_cat WHERE ns_cat_id = ?";
+  $sth = $dbh->prepare($query);
+  $sth->bindParam(1, $id);
+  $sth->execute();
+
+  $cats = array();
+  while ($row = $sth->fetch()) {
+    $cats[] = array(
+      'username' => $row['ns_cat_uname'],
+      'handle' => $row['ns_cat_handle']
+    );
+  };
+
+  if (count($cats) == 1) {
+    return $cats[0];
+  } else {
+    return null;
+  }
+}
+
+function set_cat_handle( $id, $handle, &$dbh ) {
+  if (strlen($handle) > 0) {
+    $query = "UPDATE ns_cat SET ns_cat_handle = ? WHERE ns_cat_id = ?";
+    $sth = $dbh->prepare($query);
+    $sth->bindParam(1, $handle);
+    $sth->bindParam(2, $id);
+    return $sth->execute();
+  } else {
+    return false;
+  }
+}
 
 function get_cat_id( $gci_uname, &$dbh ) {
   // Retrieve schedule DB ID number for the given username.

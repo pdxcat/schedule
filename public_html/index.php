@@ -139,7 +139,7 @@ function write_table_cell(&$date, &$hour, &$gwt_shifts) {
 				if ($time_key == $start_time) {
 					foreach ($time_val as $assignment) {
 						echo "<div class=\"" . $assignment['css_class'] . "\">";
-						echo $assignment['ns_cat_uname'];
+						echo $assignment['name'];
 						echo "</div>";
 					};
 				};

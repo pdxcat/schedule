@@ -40,6 +40,11 @@ td {
 #top-nav {
 }
 
+#user {
+  text-align: right;
+  float: right;
+}
+
 #cal_buttons {
   text-align: center;
 }

@@ -35,7 +35,7 @@ $last_of_week = clone($first_of_week);
 date_modify($last_of_week, '+5 days');
 
 // Fetch all active shift assignments and shift info between those dates.
-$shifts = get_shifts_for_all($first_of_week,$last_of_week,$dbh);
+$shifts = get_public_shifts_for_all($first_of_week,$last_of_week,$dbh);
 
 echo "An @ indicates there will be a member of the CAT present at the given day and time. The color of the symbol indicates which location they will be at.<br /><br />\n";
 echo "<span class=\"cal_labels\">";
@@ -170,7 +170,7 @@ function date_diff($date1, $date2) {
 }
 
 
-function get_shifts_for_all( &$start_date, &$end_date, &$dbh ) {
+function get_public_shifts_for_all( &$start_date, &$end_date, &$dbh ) {
         /*
         Function to fetch all active assignments in a specified date range.
         This is used to populate the weekly schedule displays which show when
@@ -178,27 +178,25 @@ function get_shifts_for_all( &$start_date, &$end_date, &$dbh ) {
 
         Format for return array looks like:
         $return_array
-        ['ns_shift_date']
-                ['ns_shift_start_time']
-                        ['ns_cat_uname']
-                        ['ns_desk_shortname']
+          ['ns_shift_date']
+          ['ns_shift_start_time']
+          ['ns_desk_shortname']
         */
 
         $gsfa_start_date = date_format($start_date, 'Y-m-d');
         $gsfa_end_date = date_format($end_date, 'Y-m-d');
 
         $query = "
-                SELECT s.ns_shift_date, s.ns_shift_start_time, c.ns_cat_uname, d.ns_desk_shortname
-                FROM ns_shift as s, ns_shift_assigned as a, ns_desk as d, ns_cat as c
+                SELECT s.ns_shift_date, s.ns_shift_start_time, d.ns_desk_shortname
+                FROM ns_shift as s, ns_shift_assigned as a, ns_desk as d
                 WHERE s.ns_shift_date >= ?
                 AND s.ns_shift_date <= ?
-                AND a.ns_cat_id = c.ns_cat_id
                 AND a.ns_desk_id = d.ns_desk_id
                 AND a.ns_shift_id = s.ns_shift_id
                 AND a.ns_sa_id NOT IN (
                         SELECT ns_sa_id
                         FROM ns_shift_dropped)
-                ORDER BY d.ns_desk_shortname,s.ns_shift_date,s.ns_shift_start_time,c.ns_cat_uname
+                ORDER BY d.ns_desk_shortname,s.ns_shift_date,s.ns_shift_start_time
                 ";
 
         $sth = $dbh->prepare($query);
@@ -214,7 +212,6 @@ function get_shifts_for_all( &$start_date, &$end_date, &$dbh ) {
         $shifts = array();
         while ($row = $sth->fetch()) {
                 $shifts[$row['ns_shift_date']][$row['ns_shift_start_time']][] = array(
-                        'ns_cat_uname' => $row['ns_cat_uname'],
                         'ns_desk_shortname' => $row['ns_desk_shortname']);
         };
 
