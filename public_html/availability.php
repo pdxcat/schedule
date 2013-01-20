@@ -61,5 +61,5 @@ if($row[0] == "f"){
 echo "</p>\n";
 ?>
 
-<p><a href=\"ns_show_schedule.php\">Return to your schedule</a></p>
+<p><a href="ns_show_schedule.php">Return to your schedule</a></p>
 </body></html>
