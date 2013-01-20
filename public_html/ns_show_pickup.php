@@ -218,7 +218,7 @@ function generate_shifts_calendar( $gct_username, $cat_id, &$dbh ) {
 	};
 	echo "</tr>";
 
-	write_calendar_footer($base_date);
+	write_calendar_footer($dbh, $base_date);
 
 };
 
@@ -253,15 +253,9 @@ function write_dated_calendar_cell(&$current_date,&$gct_shifts) {
 					value=\"1\">";
 			};
 
-			if ($shift['ns_desk_shortname'] == "Kennel") {
-				echo "<div class=\"shift_kn\">";
-				echo $shift['ns_shift_start_time'] . " - " . $shift['ns_shift_end_time'];
-				echo "</div>";
-			} elseif ($shift['ns_desk_shortname'] == "DOGHaus") {
-				echo "<div class=\"shift_dh\">";
-				echo $shift['ns_shift_start_time'] . " - " . $shift['ns_shift_end_time'];
-				echo "</div>";
-			};
+			echo "<div class=\"" . $shift['css_class'] . "\">";
+			echo $shift['ns_shift_start_time'] . " - " . $shift['ns_shift_end_time'];
+			echo "</div>";
 			echo "</span>";
 		};
 	};
@@ -294,7 +288,7 @@ function write_calendar_header( &$base_date ) {
 };
 
 
-function write_calendar_footer( &$base_date ) {
+function write_calendar_footer( &$dbh, &$base_date ) {
 	echo "</table>";
 
 	echo "<div id=\"cal_buttons\">";
@@ -306,9 +300,8 @@ function write_calendar_footer( &$base_date ) {
 	echo "</div>";
 	echo "</form>";
 
-	echo "<p>Shift key: <br />";
-	echo "<span class=\"shift_dh\">DOGHaus</span><br />";
-	echo "<span class=\"shift_kn\">Kennel</span></p>";
+
+	write_desk_key($dbh);
 };
 // End of shift calendar functions.
 

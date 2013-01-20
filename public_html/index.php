@@ -111,7 +111,7 @@ function generate_weekly_table($username, $base_date, &$dbh) {
 		};
 	};
 
-	write_table_footer();
+	write_table_footer($dbh);
 };
 
 
@@ -138,15 +138,9 @@ function write_table_cell(&$date, &$hour, &$gwt_shifts) {
 			foreach ($date_val as $time_key => $time_val) {
 				if ($time_key == $start_time) {
 					foreach ($time_val as $assignment) {
-						if ($assignment['ns_desk_shortname'] == "Kennel") {
-							echo "<div class=\"shift_kn\">";
-							echo $assignment['ns_cat_uname'];
-							echo "</div>";
-						} elseif ($assignment['ns_desk_shortname'] == "DOGHaus") {
-							echo "<div class=\"shift_dh\">";
-							echo $assignment['ns_cat_uname'];
-							echo "</div>";
-						};
+						echo "<div class=\"" . $assignment['css_class'] . "\">";
+						echo $assignment['ns_cat_uname'];
+						echo "</div>";
 					};
 				};
 			};
@@ -157,7 +151,7 @@ function write_table_cell(&$date, &$hour, &$gwt_shifts) {
 };
 
 
-function write_table_footer() {
+function write_table_footer($dbh) {
 	echo "</table>";
 
 	echo "<div id=\"cal_buttons\">\n";
@@ -168,10 +162,7 @@ function write_table_footer() {
 	echo "</form>\n";
 	echo "</div>\n";
 
-	echo "<br />";
-	echo "Shift key: <br />";
-	echo "<span class=\"shift_dh\">DOGHaus</span><br />";
-	echo "<span class=\"shift_kn\">Kennel</span><br />";
+	write_desk_key($dbh);
 };
 // End of table generation functions
 ?>

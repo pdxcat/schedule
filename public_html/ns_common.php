@@ -47,15 +47,51 @@ function bind_id_list (&$id_list, &$sth) {
   };
 };
 
+function get_desks( &$dbh ) {
+  /*  Returns an array of desks with the format:
+      [$desk_shortname => [
+        'name' => x,
+        'suite' => x,
+        'css_class' => x
+      ], ...]
+  */
+
+  $query = "SELECT ns_desk_shortname, ns_desk_name, ns_desk_suite, css_class FROM ns_desk;";
+  $sth = $dbh->prepare($query);
+  $sth->execute();
+
+  $sth->setFetchMode(PDO::FETCH_ASSOC);
+
+  // Dump all the fetched data into a 2 dimensional array and return it.
+  $desks = array();
+  while ($row = $sth->fetch()) {
+    $desks[$row['ns_desk_shortname']] = array(
+      'name' => $row['ns_desk_name'],
+      'suite' => $row['ns_desk_suite'],
+      'css_class' => $row['css_class']
+    );
+  };
+
+  return $desks;
+};
+
+function write_desk_key( &$dbh ) {
+  echo "<p>Shift key:</p>\n<ul>";
+  foreach (get_desks($dbh) as $shortname => $desk) {
+    echo "<li class=\"" . $desk['css_class'] . "\">" . $desk['name'] . "</li>\n";
+  }
+  echo "</ul>\n";
+}
+
 function get_shifts( $gs_id, &$dbh ) {
   /*
     Returns an array of shifts for the cat in question with the format:
     $return_array[
       [ns_sa_id => x,
       ns_shift_date => x,
-      ns_desk_shortname => x,
       ns_shift_start_time => x,
-      ns_shift_end_time => x],
+      ns_shift_end_time => x,
+      css_class => x],
     ...]
 
     We only want to fetch shifts scheduled on or after today's date, so
@@ -76,7 +112,7 @@ function get_shifts( $gs_id, &$dbh ) {
     desk from the desks table.
   */
   $query = "
-    SELECT a.ns_sa_id, s.ns_shift_date, d.ns_desk_shortname, s.ns_shift_start_time, s.ns_shift_end_time
+    SELECT a.ns_sa_id, s.ns_shift_date, s.ns_shift_start_time, s.ns_shift_end_time, d.css_class
     FROM ns_shift_assigned as a, ns_shift as s, ns_desk as d
     WHERE s.ns_shift_date >= ?
     AND a.ns_cat_id = ?
@@ -101,9 +137,10 @@ function get_shifts( $gs_id, &$dbh ) {
   while ($row = $sth->fetch()) {
     $shifts[] = array('ns_sa_id' => $row['ns_sa_id'],
       'ns_shift_date' => $row['ns_shift_date'],
-      'ns_desk_shortname' => $row['ns_desk_shortname'],
       'ns_shift_start_time' => $row['ns_shift_start_time'],
-      'ns_shift_end_time' => $row['ns_shift_end_time']);
+      'ns_shift_end_time' => $row['ns_shift_end_time'],
+      'css_class' => $row['css_class']
+    );
   };
 
   return $shifts;
@@ -120,14 +157,14 @@ function get_shifts_for_all( &$start_date, &$end_date, &$dbh ) {
       ['ns_shift_date']
       ['ns_shift_start_time']
       ['ns_cat_uname']
-      ['ns_desk_shortname']
+      ['css_class']
   */
 
   $gsfa_start_date = date_format($start_date, 'Y-m-d');
   $gsfa_end_date = date_format($end_date, 'Y-m-d');
 
   $query = "
-    SELECT s.ns_shift_date, s.ns_shift_start_time, c.ns_cat_uname, d.ns_desk_shortname
+    SELECT s.ns_shift_date, s.ns_shift_start_time, c.ns_cat_uname, d.css_class
     FROM ns_shift as s, ns_shift_assigned as a, ns_desk as d, ns_cat as c
     WHERE s.ns_shift_date >= ?
     AND s.ns_shift_date <= ?
@@ -137,7 +174,7 @@ function get_shifts_for_all( &$start_date, &$end_date, &$dbh ) {
     AND a.ns_sa_id NOT IN (
       SELECT ns_sa_id
       FROM ns_shift_dropped)
-    ORDER BY d.ns_desk_shortname,s.ns_shift_date,s.ns_shift_start_time,c.ns_cat_uname
+    ORDER BY d.css_class,s.ns_shift_date,s.ns_shift_start_time,c.ns_cat_uname
     ";
 
   $sth = $dbh->prepare($query);
@@ -154,7 +191,7 @@ function get_shifts_for_all( &$start_date, &$end_date, &$dbh ) {
   while ($row = $sth->fetch()) {
     $shifts[$row['ns_shift_date']][$row['ns_shift_start_time']][] = array(
       'ns_cat_uname' => $row['ns_cat_uname'],
-      'ns_desk_shortname' => $row['ns_desk_shortname']);
+      'css_class' => $row['css_class']);
   };
 
   return $shifts;
@@ -168,6 +205,11 @@ function get_shifts_to_pickup( $gsp_id, &$dbh ) {
 
     Returns an array of shifts available for the CAT in question to pick up
     with the format:
+    $return_array
+      ['ns_shift_date']
+      ['ns_shift_start_time']
+      ['ns_cat_uname']
+      ['css_class']
 
     We only want to fetch shifts on or after today's date, so we need to
     know what today is.
@@ -192,14 +234,14 @@ function get_shifts_to_pickup( $gsp_id, &$dbh ) {
 
     Data needed:
      - ns_sd_id (shift drop id, needed for insertion into shift pickup table)
-     - ns_desk_shortname (for display)
+     - css_class (for display)
      - ns_shift_date, ns_shift_start_time, ns_shift_end_time (for display)
 
     Resolves the desk id in the shift assignment to the short name for the
     desk from the desks table.
   */
   $query = "
-    SELECT sd.ns_sd_id, de.ns_desk_shortname, s.ns_shift_date, s.ns_shift_start_time, s.ns_shift_end_time
+    SELECT sd.ns_sd_id, s.ns_shift_date, s.ns_shift_start_time, s.ns_shift_end_time, de.css_class
     FROM ns_shift as s, ns_desk as de, ns_shift_assigned as sa, ns_shift_dropped as sd
     WHERE sd.ns_sa_id = sa.ns_sa_id
     AND sa.ns_shift_id = s.ns_shift_id
@@ -232,10 +274,11 @@ function get_shifts_to_pickup( $gsp_id, &$dbh ) {
   while ($row = $sth->fetch()) {
     $shifts[] = array(
       'ns_sd_id' => $row['ns_sd_id'],
-      'ns_desk_shortname' => $row['ns_desk_shortname'],
       'ns_shift_date' => $row['ns_shift_date'],
       'ns_shift_start_time' => $row['ns_shift_start_time'],
-      'ns_shift_end_time' => $row['ns_shift_end_time']);
+      'ns_shift_end_time' => $row['ns_shift_end_time'],
+      'css_class' => $row['css_class']
+    );
   };
 
   return $shifts;
@@ -249,9 +292,10 @@ function get_shifts_from_sa_ids( $sa_ids, &$dbh ) {
     $return_array[
       [ns_sa_id => x,
       ns_shift_date => x,
-      ns_desk_shortname => x,
       ns_shift_start_time => x,
       ns_shift_end_time => x],
+      desk_name => x,
+      desk_css_class => x
     ...]
 
     We only want to fetch shifts scheduled on or after today's date, so
@@ -279,7 +323,7 @@ function get_shifts_from_sa_ids( $sa_ids, &$dbh ) {
   $token_str = make_token_string($sa_ids);
 
   $query = "
-    SELECT a.ns_sa_id, s.ns_shift_date, d.ns_desk_shortname, s.ns_shift_start_time, s.ns_shift_end_time
+    SELECT a.ns_sa_id, s.ns_shift_date, d.ns_desk_name, s.ns_shift_start_time, s.ns_shift_end_time
     FROM ns_shift_assigned as a, ns_shift as s, ns_desk as d
     WHERE s.ns_shift_date >= :today
     AND a.ns_sa_id IN ($token_str)
@@ -306,9 +350,10 @@ function get_shifts_from_sa_ids( $sa_ids, &$dbh ) {
   while ($row = $sth->fetch()) {
     $shifts[] = array('ns_sa_id' => $row['ns_sa_id'],
       'ns_shift_date' => $row['ns_shift_date'],
-      'ns_desk_shortname' => $row['ns_desk_shortname'],
+      'desk_name' => $row['ns_desk_name'],
       'ns_shift_start_time' => $row['ns_shift_start_time'],
-      'ns_shift_end_time' => $row['ns_shift_end_time']);
+      'ns_shift_end_time' => $row['ns_shift_end_time']
+    );
   };
 
   return $shifts;
@@ -322,7 +367,7 @@ function get_shifts_from_sd_ids( $sd_ids, &$dbh ) {
   $return_array[
     [ns_sd_id => x,
     ns_shift_date => x,
-    ns_desk_shortname => x,
+    desk_name => x,
     ns_shift_start_time => x,
     ns_shift_end_time => x],
   ...]
@@ -348,7 +393,7 @@ function get_shifts_from_sd_ids( $sd_ids, &$dbh ) {
   $token_str = make_token_string($sd_ids);
 
   $query = "
-    SELECT sd.ns_sd_id, s.ns_shift_date, de.ns_desk_shortname, s.ns_shift_start_time, s.ns_shift_end_time
+    SELECT sd.ns_sd_id, s.ns_shift_date, de.ns_desk_name, s.ns_shift_start_time, s.ns_shift_end_time
     FROM ns_shift_dropped as sd, ns_shift as s, ns_desk as de, ns_shift_assigned as sa
     WHERE s.ns_shift_date >= :today
     AND sd.ns_sd_id IN ($token_str)
@@ -376,7 +421,7 @@ function get_shifts_from_sd_ids( $sd_ids, &$dbh ) {
     $shifts[] = array(
       'ns_sd_id' => $row['ns_sd_id'],
       'ns_shift_date' => $row['ns_shift_date'],
-      'ns_desk_shortname' => $row['ns_desk_shortname'],
+      'desk_name' => $row['ns_desk_name'],
       'ns_shift_start_time' => $row['ns_shift_start_time'],
       'ns_shift_end_time' => $row['ns_shift_end_time']);
   };
