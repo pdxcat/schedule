@@ -15,7 +15,8 @@ if ($username) {
 
   if ($cat['username'] == $username) {
     if (array_key_exists('handle', $_POST)) { // update handle
-      if (set_cat_handle($id, $_POST['handle'], $dbh)) {
+      $handle = stripslashes($_POST['handle']); // magicquotes-- php--
+      if (set_cat_handle($id, $handle, $dbh)) {
         redirect();
       } else {
         include('header.php');

@@ -463,8 +463,25 @@ function get_cat_by_id( $id, &$dbh ) {
   }
 }
 
+function is_valid_handle( $handle ) {
+  /*  cbeck++ for finding the ircd source for valid nicknames:
+      https://github.com/atheme/charybdis/blob/master/modules/core/m_nick.c#L550
+      https://github.com/atheme/charybdis/blob/master/include/match.h#L120
+      https://github.com/atheme/charybdis/blob/master/src/match.c#L657
+
+      so, first char can't be a '-' or a digit
+      max length (on irc.cat.pdx.edu, as of 2013-01-20) is 18
+      min length is 1
+      valid characters are a-z, A-Z, 0-9, -, [, \, ], ^, _, `, {, |, }
+  */
+  $first_char = '[a-zA-Z\[\\\\\]\^_\`\{\|\}]';
+  $next_char  = '[a-zA-Z0-9\[\\\\\]\^_`\{\|\}]';
+  $pattern = "/^" . $first_char . $next_char . "{0,17}$/";
+  return preg_match($pattern, $handle);
+}
+
 function set_cat_handle( $id, $handle, &$dbh ) {
-  if (strlen($handle) > 0) {
+  if (is_valid_handle($handle)) {
     $query = "UPDATE ns_cat SET ns_cat_handle = ? WHERE ns_cat_id = ?";
     $sth = $dbh->prepare($query);
     $sth->bindParam(1, $handle);
