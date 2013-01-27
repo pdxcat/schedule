@@ -428,6 +428,11 @@ function get_shifts_from_sd_ids( $sd_ids, &$dbh ) {
   return $shifts;
 };
 
+function get_cat_handle_by_id( $id, &$dbh ) {
+  $cat = get_cat_by_id($id, $dbh);
+  return $cat['handle'];
+}
+
 function get_cat_handle_by_username( $username, &$dbh ) {
   $cat = get_cat_by_username($username, $dbh);
   return $cat['handle'];
@@ -463,6 +468,35 @@ function get_cat_by_id( $id, &$dbh ) {
   }
 }
 
+function log_handle_change( $id, $old_handle, $new_handle, &$dbh ) {
+  $id = new_activity_entry("Handle Change", $id, $dbh);
+  $query = "INSERT INTO activity_handle_changes (activity_id, old_handle, new_handle) VALUES (?, ?, ?)";
+  $sth = $dbh->prepare($query);
+  $sth->bindParam(1, $id);
+  $sth->bindParam(2, $old_handle);
+  $sth->bindParam(3, $new_handle);
+  return $sth->execute();
+}
+
+function new_activity_entry( $activity_type_name, $id, &$dbh ) {
+  $type = get_activity_type_for_name($activity_type_name, $dbh);
+  $query = "INSERT INTO activity (cat_id, type_id) VALUES (?, ?)";
+  $prep = $dbh->prepare($query);
+  $prep->bindParam(1, $id);
+  $prep->bindParam(2, $type);
+  $prep->execute();
+  return $dbh->lastInsertId();
+}
+
+function get_activity_type_for_name( $activity_name, &$dbh ) {
+  $query = "SELECT id FROM activity_types WHERE name = ?";
+  $sth = $dbh->prepare($query);
+  $sth->bindParam(1, $activity_name);
+  $sth->execute();
+  $ids = build_array_from_query_results($sth, 'id');
+  return $ids[0];
+}
+
 function is_valid_handle( $handle ) {
   /*  cbeck++ for finding the ircd source for valid nicknames:
       https://github.com/atheme/charybdis/blob/master/modules/core/m_nick.c#L550
@@ -481,12 +515,19 @@ function is_valid_handle( $handle ) {
 }
 
 function set_cat_handle( $id, $handle, &$dbh ) {
-  if (is_valid_handle($handle)) {
+  $old_handle = get_cat_handle_by_id($id, $dbh);
+  if ($handle == $old_handle) {
+    return true;
+  } else if (is_valid_handle($handle)) {
     $query = "UPDATE ns_cat SET ns_cat_handle = ? WHERE ns_cat_id = ?";
     $sth = $dbh->prepare($query);
     $sth->bindParam(1, $handle);
     $sth->bindParam(2, $id);
-    return $sth->execute();
+    $result = $sth->execute();
+    if ($result) {
+      log_handle_change($id, $old_handle, $handle, $dbh);
+    }
+    return $result;
   } else {
     return false;
   }
