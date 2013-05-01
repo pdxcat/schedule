@@ -52,10 +52,10 @@ if ($datearg =~ /^(\d{4})-(\d{2})-(\d{2})$/) {
 };
 
 
-my $db = "schedule";
-my $host = "db.cecs.pdx.edu";
-my $user = "schedule";
-my $password = "jm)n3Ffz6m";
+my $db = "yourdatabasehere";
+my $host = "yourserverhere.example.com";
+my $user = "yournamehere";
+my $password = "yourpasswordhere";
 my $dbh = DBI->connect ("DBI:mysql:database=$db:host=$host",$user,$password) or die "Can't connect to database: $DBI::errstr\n";
 
 # Fetch shifts for the given day.

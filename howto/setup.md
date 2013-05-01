@@ -21,4 +21,5 @@ Deskbot
 
 1. Edit the deskbot ruby script to include your database settings and
    credentials.
-2. Run the script.
+2. Edit the deskbot ruby script to include your irc settings.
+3. Run the script.

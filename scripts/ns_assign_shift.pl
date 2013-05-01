@@ -30,10 +30,10 @@ use Getopt::Long;
 
 # Some configuration items
 
-my $db = "schedule";
-my $host = "db.cecs.pdx.edu";
-my $user = "schedule";
-my $password = "jm)n3Ffz6m";
+my $db = "yourdatabasehere";
+my $host = "yourserverhere.example.com";
+my $user = "yournamehere";
+my $password = "yourpasswordhere";
 my $dbh = DBI->connect ("DBI:mysql:database=$db:host=$host",$user,$password) or die "Can't connect to database: $DBI::errstr\n";
 
 # Which types of CATs are eligible for desk duty?

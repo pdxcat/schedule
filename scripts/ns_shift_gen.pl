@@ -49,10 +49,10 @@ use POSIX;
 # -Loop to go through each valid hour for a day and create an appropriate number of shifts for each of hours based on the number of seats we have.
 # -Insert record into ns_shift
 
-my $db = "schedule";
-my $host = "db.cecs.pdx.edu";
-my $user = "schedule";
-my $password = "jm)n3Ffz6m";
+my $db = "yourdatabasehere";
+my $host = "yourserverhere.example.com";
+my $user = "yournamehere";
+my $password = "yourpasswordhere";
 my $dbh = DBI->connect ("DBI:mysql:database=$db:host=$host",$user,$password) or die "Can't connect to database: $DBI::errstr\n";
 my @start_date;		# Date to start at, taken from arguments in YYYY-MM-DD format, then broken up into this array as three pieces YYYY, MM, DD.
 my @end_date;		# Date to end at, as above.

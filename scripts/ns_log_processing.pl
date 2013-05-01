@@ -23,10 +23,10 @@ use Getopt::Long;
 use Date::Calc ("Delta_DHMS","Add_Delta_Days");
 use DBI;
 use POSIX;
-my $db = "schedule";
-my $host = "db.cecs.pdx.edu";
-my $user = "schedule";
-my $password = "jm)n3Ffz6m";
+my $db = "yourdatabasehere";
+my $host = "yourserverhere.example.com";
+my $user = "yournamehere";
+my $password = "yourpasswordhere";
 my ($date,$shortdate,$weekday,$windate,$dbdate);
 
 my $datearg = "";
