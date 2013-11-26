@@ -525,7 +525,7 @@ function is_valid_handle( $handle ) {
       valid characters are a-z, A-Z, 0-9, -, [, \, ], ^, _, `, {, |, }
   */
   $first_char = '[a-zA-Z\[\\\\\]\^_\`\{\|\}]';
-  $next_char  = '[a-zA-Z0-9\[\\\\\]\^_`\{\|\}]';
+  $next_char  = '[a-zA-Z\-0-9\[\\\\\]\^_`\{\|\}]';
   $pattern = "/^" . $first_char . $next_char . "{0,17}$/";
   return preg_match($pattern, $handle);
 }
