@@ -46,6 +46,9 @@ begin
       when /onduty/i
         msg channel, get_onduty(args)
 
+      when /ondesk/i
+        msg channel, get_onduty(args)
+
       when /next/
         if args.nil?
           msg channel, "Usage: %next <username>..."
