@@ -50,7 +50,7 @@ begin
         msg channel, get_onduty(args)
 
       when /next/
-        if args.nil?
+        if args.to_s.empty?
           msg channel, "Usage: %next <username>..."
         else
           args.split(/[^\w]+/).each do |uname|
@@ -59,7 +59,7 @@ begin
         end
 
       when /whois/
-        if args.nil?
+        if args.to_s.empty?
           msg channel, "Usage: %whois <username|handle>..."
         else
           args.split(/\s+/).each do |name|
@@ -183,7 +183,7 @@ end
 
 def get_onduty(at)
   begin
-    at_time = at.nil? ? Time.now : Time.parse(at)
+    at_time = at.to_s.empty? ? Time.now : Time.parse(at)
   rescue
     return "Couldn't parse #{at} as a date or time."
   end
