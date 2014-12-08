@@ -1,8 +1,18 @@
 AuthType Basic
 AuthName catsonly 
-AuthBasicProvider external
-AuthExternal pwauth
+
+#AuthBasicProvider external
+#AuthExternal pwauth
+
+Authtype CAS
+CASCookie CECS_AUTH_CAS
+CASSecureCookie CECS_AUTH_CAS_S
+CASGatewayCookie CECS_AUTH_CAS_G
+CASScope /
+
+
 SSLRequireSSL
+
 GroupExternal groupcheck
 require group cat
 
@@ -10,3 +20,4 @@ require group cat
     Order allow,deny
     Deny from all
 </Files>
+

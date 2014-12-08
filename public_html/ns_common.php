@@ -32,7 +32,11 @@ function start_db() {
 function check_session() {
   if (!isset($_SESSION['id'])) {
     session_start();
-    $_SESSION['username'] = $_SERVER[PHP_AUTH_USER];
+    if(isset($_SERVER['HTTP_CAS_USER'])) {
+      $_SESSION['username'] = $_SERVER['HTTP_CAS_USER'];
+    } else {
+      $_SESSION['username'] = $_SERVER[PHP_AUTH_USER];
+    }
   } else {
   };
 };

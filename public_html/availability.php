@@ -23,7 +23,11 @@
 <body>
 <?php
 
-$username= $_SERVER[PHP_AUTH_USER];
+if(isset($_SERVER['HTTP_CAS_USER'])) {
+  $username = $_SERVER['HTTP_CAS_USER'];
+} else {
+  $username = $_SERVER[PHP_AUTH_USER];
+}
 
 echo "<table border=1>
 	<tr>\n
