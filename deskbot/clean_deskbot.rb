@@ -58,6 +58,9 @@ begin
           end
         end
 
+      when /source/
+        msg channel, "Source at https://github.com/pdxcat/schedule"
+
       when /whois/
         if args.to_s.empty?
           msg channel, "Usage: %whois <username|handle>..."
