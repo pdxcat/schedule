@@ -14,7 +14,12 @@ CASScope /
 SSLRequireSSL
 
 GroupExternal groupcheck
-require group cat
+<IfVersion < 2.4>
+    Require group cat
+</IfVersion>
+<IfVersion >= 2.4>
+    Require external-group cat
+</IfVersion>
 
 <Files ~ "\.inc$">
     Order allow,deny
