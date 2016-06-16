@@ -600,7 +600,7 @@ function build_array_from_query_results($preparedStatement, $columnName) {
   example posted at http://www.php.net/manual/en/datetime.diff.php by Dennis C.
 */
 
-function date_diff($date1, $date2) {
+function our_date_diff($date1, $date2) {
     $current = $date1;
     $datetime2 = date_create($date2);
     $count = 0;

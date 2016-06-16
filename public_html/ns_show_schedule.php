@@ -201,7 +201,7 @@ function generate_shifts_calendar( $gct_username, $cat_id, &$dbh ) {
     if ((date_format($first_of_month, 'w') + 1) == $cell) {
 
       for($current_date = $first_of_month;
-      date_diff(date_format($current_date,'Y-m-d'),date_format($last_of_month,'Y-m-d')) >= 0;
+      our_date_diff(date_format($current_date,'Y-m-d'),date_format($last_of_month,'Y-m-d')) >= 0;
       date_modify($current_date,'+1 day')) {
         write_dated_calendar_cell($current_date,$gct_shifts);
 
@@ -215,7 +215,7 @@ function generate_shifts_calendar( $gct_username, $cat_id, &$dbh ) {
         // Hackish shit necessary due to the hackishness of the
         // date_diff function I'm using as a stand in for the
         // real thing since we're running ancient ass PHP.
-        if (date_diff(date_format($current_date,'Y-m-d'),
+        if (our_date_diff(date_format($current_date,'Y-m-d'),
         date_format($last_of_month,'Y-m-d')) == 0) {
           break;
         };

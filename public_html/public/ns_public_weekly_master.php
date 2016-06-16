@@ -78,7 +78,7 @@ echo "</span>";
 for ($hour = 8; $hour <= 17; $hour++) {
 	// Loop over each day of the week being viewed
 	for ($current_date = clone($first_of_week);
-	date_diff(date_format($current_date,'Y-m-d'),date_format($last_of_week,'Y-m-d')) >= 0 ;
+	our_date_diff(date_format($current_date,'Y-m-d'),date_format($last_of_week,'Y-m-d')) >= 0 ;
 	date_modify($current_date,'+1 day')) {
 		// If day is Monday, begin a new row and write out the hour
 		// label.
@@ -101,7 +101,7 @@ for ($hour = 8; $hour <= 17; $hour++) {
 		// Hackish shit necessary due to the hackishness of the
 		// date_diff function I'm using as a stand in for the
 		// real thing since we're running ancient ass PHP.
-		if (date_diff(date_format($current_date,'Y-m-d'),
+		if (our_date_diff(date_format($current_date,'Y-m-d'),
 		date_format($last_of_week,'Y-m-d')) == 0) {
 			break;
 		};
@@ -175,7 +175,7 @@ Using this since we're currently runing PHP 5.2.mumble. It's taken from an
 example posted at http://www.php.net/manual/en/datetime.diff.php by Dennis C.
 */
 
-function date_diff($date1, $date2) {
+function our_date_diff($date1, $date2) {
     $current = $date1;
     $datetime2 = date_create($date2);
     $count = 0;

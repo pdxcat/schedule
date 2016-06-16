@@ -99,7 +99,7 @@ function generate_weekly_table($username, $base_date, &$dbh) {
 	for ($hour = 8; $hour <= 17; $hour++) {
 		// Loop over each day of the week being viewed
 		for ($current_date = clone($first_of_week);
-		date_diff(date_format($current_date,'Y-m-d'),date_format($last_of_week,'Y-m-d')) >= 0 ;
+		our_date_diff(date_format($current_date,'Y-m-d'),date_format($last_of_week,'Y-m-d')) >= 0 ;
 		date_modify($current_date,'+1 day')) {
 			// If day is Monday, begin a new row and write out the hour
 			// label.
@@ -121,7 +121,7 @@ function generate_weekly_table($username, $base_date, &$dbh) {
 			// Hackish shit necessary due to the hackishness of the
 			// date_diff function I'm using as a stand in for the
 			// real thing since we're running ancient ass PHP.
-			if (date_diff(date_format($current_date,'Y-m-d'),
+			if (our_date_diff(date_format($current_date,'Y-m-d'),
 			date_format($last_of_week,'Y-m-d')) == 0) {
 				break;
 			};
