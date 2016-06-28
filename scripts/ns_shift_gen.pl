@@ -1,4 +1,4 @@
-#! /opt/csw/bin/perl
+#!/usr/bin/perl
 
 # Licensed to the Computer Action Team (CAT) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -25,7 +25,9 @@ use Date::Calc "Delta_Days";
 use Date::Calc "Add_Delta_Days";
 use Date::Calc "Day_of_Week";
 use DBI;
+use FindBin;
 use POSIX;
+use YAML qw(LoadFile);
 
 # ns_shift_gen.pl
 # Generates entries for ns_shift.
@@ -49,10 +51,13 @@ use POSIX;
 # -Loop to go through each valid hour for a day and create an appropriate number of shifts for each of hours based on the number of seats we have.
 # -Insert record into ns_shift
 
-my $db = "yourdatabasehere";
-my $host = "yourserverhere.example.com";
-my $user = "yournamehere";
-my $password = "yourpasswordhere";
+my $config   = LoadFile("$FindBin::Bin/../config.yaml");
+
+my $db = $config->{'db'};
+my $host = $config->{'host'};
+my $user = $config->{'user'};
+my $password = $config->{'password'};
+
 my $dbh = DBI->connect ("DBI:mysql:database=$db:host=$host",$user,$password) or die "Can't connect to database: $DBI::errstr\n";
 my @start_date;		# Date to start at, taken from arguments in YYYY-MM-DD format, then broken up into this array as three pieces YYYY, MM, DD.
 my @end_date;		# Date to end at, as above.

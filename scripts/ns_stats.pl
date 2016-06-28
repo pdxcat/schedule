@@ -1,4 +1,4 @@
-#!/opt/csw/bin/perl
+#!/usr/bin/perl
 
 # Licensed to the Computer Action Team (CAT) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -22,8 +22,10 @@ use warnings;
 use Getopt::Long;
 use POSIX;
 use DBI;
+use FindBin;
 use Date::Calc;
 use Data::Dumper;
+use YAML qw(LoadFile);
 
 # ns_stats.pl
 # Perform analysis of schedule shifts and log entries to determine who is at
@@ -52,10 +54,13 @@ if ($datearg =~ /^(\d{4})-(\d{2})-(\d{2})$/) {
 };
 
 
-my $db = "yourdatabasehere";
-my $host = "yourserverhere.example.com";
-my $user = "yournamehere";
-my $password = "yourpasswordhere";
+my $config   = LoadFile("$FindBin::Bin/../config.yaml");
+
+my $db = $config->{'db'};
+my $host = $config->{'host'};
+my $user = $config->{'user'};
+my $password = $config->{'password'};
+
 my $dbh = DBI->connect ("DBI:mysql:database=$db:host=$host",$user,$password) or die "Can't connect to database: $DBI::errstr\n";
 
 # Fetch shifts for the given day.

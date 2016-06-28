@@ -1,4 +1,4 @@
-#! /opt/csw/bin/perl
+#!/usr/bin/perl
 
 # Licensed to the Computer Action Team (CAT) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -21,19 +21,24 @@ use strict;
 use warnings;
 use Date::Calc "Delta_DHMS";
 use DBI;
+use FindBin;
 use POSIX;
 use Getopt::Long;
+use YAML qw(LoadFile);
+
 
 # ns_assign_shift.pl
 # Assigns shifts to a DOG for a given day of the week and hour or range of
 # hours.
 
 # Some configuration items
+my $config   = LoadFile("$FindBin::Bin/../config.yaml");
 
-my $db = "yourdatabasehere";
-my $host = "yourserverhere.example.com";
-my $user = "yournamehere";
-my $password = "yourpasswordhere";
+my $db = $config->{'db'};
+my $host = $config->{'host'};
+my $user = $config->{'user'};
+my $password = $config->{'password'};
+
 my $dbh = DBI->connect ("DBI:mysql:database=$db:host=$host",$user,$password) or die "Can't connect to database: $DBI::errstr\n";
 
 # Which types of CATs are eligible for desk duty?

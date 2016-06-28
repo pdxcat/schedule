@@ -1,4 +1,4 @@
-#! /opt/csw/bin/perl
+#!/usr/bin/perl
 
 # Licensed to the Computer Action Team (CAT) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -20,14 +20,19 @@
 use strict;
 use warnings;
 use DBI;
+use FindBin;
+use YAML qw(LoadFile);
 
 # ns_holiday_management.pl
 # View, add, edit, and remove holidays from the schedule database.
 
-my $db = "yourdatabasehere";
-my $host = "yourserverhere.example.com";
-my $user = "yournamehere";
-my $password = "yourpasswordhere";
+my $config   = LoadFile("$FindBin::Bin/../config.yaml");
+
+my $db = $config->{'db'};
+my $host = $config->{'host'};
+my $user = $config->{'user'};
+my $password = $config->{'password'};
+
 my $dbh = DBI->connect ("DBI:mysql:database=$db:host=$host",$user,$password) or die "Can't connect to database: $DBI::errstr\n";
 
 # Check arguments. Valid ones are:

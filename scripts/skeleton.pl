@@ -1,4 +1,4 @@
-#! /opt/csw/bin/perl
+#!/usr/bin/perl
 
 # Licensed to the Computer Action Team (CAT) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -21,14 +21,19 @@ use strict;
 use warnings;
 use Date::Calc "Delta_DHMS";
 use DBI;
+use FindBin;
 use POSIX;
+use YAML qw(LoadFile);
 
 # script name
 # script purpose
 
-my $db = "yourdatabasehere";
-my $host = "yourserverhere.example.com";
-my $user = "yournamehere";
-my $password = "yourpasswordhere";
+
+my $config   = LoadFile("$FindBin::Bin/../config.yaml");
+
+my $db = $config->{'db'};
+my $host = $config->{'host'};
+my $user = $config->{'user'};
+my $password = $config->{'password'};
 
 

@@ -1,4 +1,4 @@
-#! /opt/csw/bin/perl
+#!/usr/bin/perl
 
 # Licensed to the Computer Action Team (CAT) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -22,11 +22,17 @@ use warnings;
 use Getopt::Long;
 use Date::Calc ("Delta_DHMS","Add_Delta_Days");
 use DBI;
+use FindBin;
 use POSIX;
-my $db = "yourdatabasehere";
-my $host = "yourserverhere.example.com";
-my $user = "yournamehere";
-my $password = "yourpasswordhere";
+use YAML qw(LoadFile);
+
+my $config   = LoadFile("$FindBin::Bin/../config.yaml");
+
+my $db = $config->{'db'};
+my $host = $config->{'host'};
+my $user = $config->{'user'};
+my $password = $config->{'password'};
+
 my ($date,$shortdate,$weekday,$windate,$dbdate);
 
 my $datearg = "";
