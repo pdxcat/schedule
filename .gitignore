@@ -1,3 +1,4 @@
-*.swp
-db.inc
+/*.swp
 /config.yaml
+/public_html/db.inc
+/scripts/Archive
