@@ -1,9 +1,6 @@
 AuthType Basic
 AuthName catsonly 
 
-#AuthBasicProvider external
-#AuthExternal pwauth
-
 Authtype CAS
 CASCookie CECS_AUTH_CAS
 CASSecureCookie CECS_AUTH_CAS_S
