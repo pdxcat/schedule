@@ -28,12 +28,10 @@ use YAML qw(LoadFile);
 # script name
 # script purpose
 
+my $config = LoadFile("$FindBin::Bin/../config.yaml");
 
-my $config   = LoadFile("$FindBin::Bin/../config.yaml");
-
-my $db = $config->{'db'};
-my $host = $config->{'host'};
-my $user = $config->{'user'};
+my $db       = $config->{'db'};
+my $host     = $config->{'host'};
+my $user     = $config->{'user'};
 my $password = $config->{'password'};
-
 
