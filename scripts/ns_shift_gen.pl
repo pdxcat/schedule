@@ -65,7 +65,7 @@ my %holidays;		# Hash of holidays, built from ns_holiday entries. holiday date =
 %holidays = ();
 
 # Determine whether we have valid arguments. If so, call buildshifts() and start generating shifts.
-if (!defined @ARGV) {
+if (!defined $ARGV[0]) {
 	print "No arguments specified! Please use the -d option to specify a start and end date, or the -t option to specify a term by name.\n";
 	exit;
 }elsif ($ARGV[0] eq "-t") {
