@@ -19,7 +19,7 @@
 
 use strict;
 use warnings;
-use Date::Calc "Delta_DHMS";
+use Date::Calc 'Delta_DHMS';
 use DBI;
 use FindBin;
 use POSIX;

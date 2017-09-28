@@ -34,16 +34,16 @@ my $user     = $config->{'user'};
 my $password = $config->{'password'};
 
 my $dbh = DBI->connect( "DBI:mysql:database=$db:host=$host", $user, $password )
-    or die "Can't connect to database: $DBI::errstr\n";
+    or die ("Can't connect to database: $DBI::errstr\n");
 
 # Check arguments. Valid ones are:
-# -l				Lists holidays currently in the database
-# -n 		 	 	Create a new entry in the database
-# -d name			Delete an entry from the database
+# -l                            Lists holidays currently in the database
+# -n                            Create a new entry in the database
+# -d name                       Delete an entry from the database
 
 my $invalid_args_message = "Invalid argument. Use one of the following:
 -l                            Lists holidays currently in the database
--n name date		      Create a new entry in the database
+-n name date                  Create a new entry in the database
 -d name                       Delete an entry from the database\n";
 
 if ( !defined $ARGV[0] )
@@ -52,13 +52,13 @@ if ( !defined $ARGV[0] )
 
     # Option for listing all holiday entries
     }
-elsif ( $ARGV[0] eq "-l" )
+elsif ( $ARGV[0] eq '-l' )
     {
     ho_list();
 
     # Option to create a new holiday entry
     }
-elsif ( $ARGV[0] eq "-n" )
+elsif ( $ARGV[0] eq '-n' )
     {
     my %args;
     my $namestring;
@@ -90,7 +90,7 @@ elsif ( $ARGV[0] eq "-n" )
             }
         }
     $args{'name'} = $namestring;
-    if ( defined $args{'name'} && defined $args{'date'} && $args{'name'} ne "" )
+    if ( defined $args{'name'} && defined $args{'date'} && $args{'name'} ne '' )
         {
         ho_add( \%args );
         }
@@ -102,7 +102,7 @@ elsif ( $ARGV[0] eq "-n" )
 
     # Option to delete a holiday entry
     }
-elsif ( $ARGV[0] eq "-d" )
+elsif ( $ARGV[0] eq '-d' )
     {
     if ( $ARGV[1] =~ /^\d{4}-\d{2}-\d{2}$/ )
         {
@@ -145,6 +145,8 @@ sub ho_list
         {
         print "$ho_ref->{$id}->{'ns_holiday_name'} on $ho_ref->{$id}->{'ns_holiday_date'}.\n";
         }
+
+    return 1;
     }
 
 # Add a holiday entry to the database
@@ -176,8 +178,8 @@ sub ho_add
     # with the specified attributes.
     my $sth_add_ho = $dbh->prepare(
         'INSERT INTO ns_holiday (ns_holiday_name, ns_holiday_date)
-	VALUES (?, ?)'
-    ) or die "Couldn't prepare statement: $dbh->errstr \n";
+        VALUES (?, ?)'
+    ) or die ("Couldn't prepare statement: $dbh->errstr \n");
     $sth_add_ho->bind_param( 1, $args_ref->{'name'} );
     $sth_add_ho->bind_param( 2, $args_ref->{'date'} );
     my $return = $sth_add_ho->execute;
@@ -187,7 +189,7 @@ sub ho_add
         {
         print "Unable to execute addition query: $dbh->errstr \n";
         }
-    elsif ( $return eq 1 )
+    elsif ( $return == 1 )
         {
         print "Added new holiday entry for $args_ref->{'name'}\n";
         }
@@ -195,6 +197,7 @@ sub ho_add
         {
         print "Something odd happened. Addition query returned: $return\n";
         }
+    return 1;
     }
 
 # Delete a holiday entry from the database by name
@@ -212,7 +215,7 @@ sub ho_del_name
         {
         print "Unable to execute deletion query: $dbh->errstr \n";
         }
-    elsif ( $return eq "0E0" )
+    elsif ( $return eq '0E0' )
         {
         print "No such holiday to remove!\n";
         }
@@ -220,6 +223,8 @@ sub ho_del_name
         {
         print "Successfully deleted $return holiday(s) called $args_ref->{'name'}.\n";
         }
+
+    return 1;
     }
 
 # Delete a holiday entry from the database by date
@@ -237,7 +242,7 @@ sub ho_del_date
         {
         print "Unable to execute deletion query: $dbh->errstr \n";
         }
-    elsif ( $return eq "0E0" )
+    elsif ( $return eq '0E0' )
         {
         print "No such holiday to remove!\n";
         }
@@ -245,6 +250,7 @@ sub ho_del_date
         {
         print "Successfully deleted $return holiday(s) with date $args_ref->{'date'}.\n";
         }
+    return 1;
     }
 
 sub ho_get
@@ -253,7 +259,7 @@ sub ho_get
     # Return a hash reference containing the holidays keyed to their id
     my $sth_get_hos =
         $dbh->prepare('SELECT * FROM ns_holiday ORDER BY ns_holiday_date')
-        or die "Couldn't prepare statement: " . $dbh->errstr;
+	or die ("Couldn't prepare statement: $dbh->errstr \n");
     $sth_get_hos->execute;
     return $sth_get_hos->fetchall_hashref('ns_holiday_id');
     }

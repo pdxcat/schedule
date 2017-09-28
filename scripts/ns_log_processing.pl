@@ -20,7 +20,7 @@
 use strict;
 use warnings;
 use Getopt::Long;
-use Date::Calc ( "Delta_DHMS", "Add_Delta_Days" );
+use Date::Calc ( 'Delta_DHMS', 'Add_Delta_Days' );
 use DBI;
 use FindBin;
 use POSIX;
@@ -35,26 +35,26 @@ my $password = $config->{'password'};
 
 my ( $date, $shortdate, $weekday, $windate, $dbdate );
 
-my $datearg  = "";
-my $rangearg = "";
+my $datearg  = '';
+my $rangearg = '';
 my $args     = GetOptions(
     'date=s'  => \$datearg,
     'range=s' => \$rangearg
 );
 
-if ( $datearg =~ /^(\d{4})-(\d{2})-(\d{2})$/ && $rangearg eq "" )
+if ( $datearg =~ /^(\d{4})-(\d{2})-(\d{2})$/ && $rangearg eq '' )
     {
     # If we got a date argument only...
-    $date      = strftime( "%a %b %e", 0, 0, 0, $3, $2 - 1, $1 - 1900 );
-    $shortdate = strftime( "%b%d",     0, 0, 0, $3, $2 - 1, $1 - 1900 );
-    $weekday   = strftime( "%a",       0, 0, 0, $3, $2 - 1, $1 - 1900 );
+    $date      = strftime( '%a %b %e', 0, 0, 0, $3, $2 - 1, $1 - 1900 );
+    $shortdate = strftime( '%b%d',     0, 0, 0, $3, $2 - 1, $1 - 1900 );
+    $weekday   = strftime( '%a',       0, 0, 0, $3, $2 - 1, $1 - 1900 );
     $windate   = $1 . $2 . $3;
-    $dbdate    = $1 . "-" . $2 . "-" . $3;
+    $dbdate    = $1 . '-' . $2 . '-' . $3;
 
     process_logs();
 
     }
-elsif ($datearg eq ""
+elsif ($datearg eq ''
     && $rangearg =~ /^(\d{4})-(\d{2})-(\d{2}) (\d{4})-(\d{2})-(\d{2})$/ )
     {
     # If we got a range argument only...
@@ -66,22 +66,22 @@ elsif ($datearg eq ""
         >= 0 )
         {
         $date = strftime(
-            "%a %b %e", 0, 0, 0, $rangecurrent[2],
+            '%a %b %e', 0, 0, 0, $rangecurrent[2],
             $rangecurrent[1] - 1,
             $rangecurrent[0] - 1900
         );
         $shortdate = strftime(
-            "%b%d", 0, 0, 0, $rangecurrent[2],
+            '%b%d', 0, 0, 0, $rangecurrent[2],
             $rangecurrent[1] - 1,
             $rangecurrent[0] - 1900
         );
         $weekday = strftime(
-            "%a", 0, 0, 0, $rangecurrent[2],
+            '%a', 0, 0, 0, $rangecurrent[2],
             $rangecurrent[1] - 1,
             $rangecurrent[0] - 1900
         );
-        $windate = sprintf( "%4d%02d%02d",   @rangecurrent[ 0 .. 2 ] );
-        $dbdate  = sprintf( "%4d-%02d-%02d", @rangecurrent[ 0 .. 2 ] );
+        $windate = sprintf( '%4d%02d%02d',   @rangecurrent[ 0 .. 2 ] );
+        $dbdate  = sprintf( '%4d-%02d-%02d', @rangecurrent[ 0 .. 2 ] );
 
         process_logs();
 
@@ -90,16 +90,16 @@ elsif ($datearg eq ""
         }
 
     }
-elsif ( $datearg eq "" && $rangearg eq "" )
+elsif ( $datearg eq '' && $rangearg eq '' )
     {
     print "Defaulting to the current date. Try --date or --range if you need to process logs for other days.\n";
 
     # If we got neither argument...
-    chomp( $date      = `date +"%a %b %e"` );
+    chomp( $date      = `date +'%a %b %e'` );
     chomp( $shortdate = `date +%b%d` );
     chomp( $weekday   = `date +%a` );
     chomp( $windate   = `date +%Y%m%d` );
-    chomp( $dbdate    = `date +"%Y-%m-%d"` );
+    chomp( $dbdate    = `date +'%Y-%m-%d'` );
 
     process_logs();
 
@@ -139,16 +139,16 @@ sub process_logs
         /^(.+?)\s+.+?\s+(.+?)\s+.+?(\d{2}:\d{2}).+?(\d{2}:\d{2}|logged).+?/;
 
         # If the line is not related to the DH Sunray step over it
-        if ( $2 ne ":3" && $2 ne ":4" )
+        if ( $2 ne ':3' && $2 ne ':4' )
             {
             next;
             }
 
         # Ignore people who are still logged in
-        if ( $4 eq "logged" )
+        if ( $4 eq 'logged' )
             {
             }
-        elsif ( $4 ne "(00:00)" )
+        elsif ( $4 ne '(00:00)' )
             {
             push @logs, "$1 $3 $4 chandra";
             }
@@ -176,18 +176,18 @@ sub process_logs
         )
         {
         /^(.+?)\s+.+?\s+.+?\s+.+?\s+.+?\s+.+?\s+(.+?)\s+.+?\s+(.+?)\s+(.+)\s/;
-        if ( $3 eq "logged" )
+        if ( $3 eq 'logged' )
             {
             push @strays, "$1 $2 $3 scissors";
             }
-        elsif ( $4 ne "(00:00)" )
+        elsif ( $4 ne '(00:00)' )
             {
             push @logs, "$1 $2 $3 scissors";
             }
         }
 
     #Add windows logs
-    foreach ( "hapi", "mut", "kupo", "aragog", "paper", "rock" )
+    foreach ( 'hapi', 'mut', 'kupo', 'aragog', 'paper', 'rock' )
         {
         my @temp2 = ();
         foreach (
@@ -254,7 +254,7 @@ sub process_logs
         or die "Can't connect to database: $DBI::errstr\n";
     my $sth_get_active_cats = $dbh->prepare(
         'SELECT ns_cat_id, ns_cat_uname, ns_cat_type_id FROM ns_cat')
-        or die "Couldn't prepare statement: " . $dbh->errstr;
+        or die 'Could not prepare statement: ' . $dbh->errstr;
     $sth_get_active_cats->execute;
     while ( my @ns_cat_entry = $sth_get_active_cats->fetchrow_array() )
         {
@@ -266,15 +266,15 @@ sub process_logs
 
     #my $key;
     #foreach $key (sort keys (%active_cats)) {
-    #	print "$key: $active_cats{$key}\n";
+    #   print "$key: $active_cats{$key}\n";
     #};
 
     my $sth_add_log_entry = $dbh->prepare(
 'INSERT INTO `ns_log_item` (ns_cat_id,ns_li_date,ns_li_ontime,ns_li_offtime,ns_li_machine) VALUES (?,?,?,?,?)'
-    ) or die "Couldn't prepare statement: " . $dbh->errstr;
+    ) or die 'Could not prepare statement: ' . $dbh->errstr;
     my $sth_check_if_exists = $dbh->prepare(
 'SELECT COUNT(*) FROM `ns_log_item` WHERE ns_li_date=? AND ns_li_ontime=? AND ns_li_offtime=? AND ns_li_machine=?'
-    ) or die "Couldn't prepare statement: " . $dbh->errstr;
+    ) or die 'Could not prepare statement: ' . $dbh->errstr;
 
     # @logs format...
     # username timeon timeoff machine
@@ -317,4 +317,6 @@ sub process_logs
             print "$1 not a DOG or DROID, skipping.\n";
             }
         }
+
+    return 1;
     }

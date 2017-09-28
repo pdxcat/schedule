@@ -43,13 +43,13 @@ my @date = localtime(time);
 # %Y is replaced by the year with century as a decimal number.
 # %m is replaced by the month as a decimal number [01,12].
 # %d is replaced by the day of the month as a decimal number [01,31].
-my $datestr = strftime( "%Y-%m-%d", @date );
-my $datearg = "";
+my $datestr = strftime( '%Y-%m-%d', @date );
+my $datearg = '';
 my $args    = GetOptions( 'date=s' => \$datearg );
 
 if ( $datearg =~ /^(\d{4})-(\d{2})-(\d{2})$/ )
     {
-    $datestr = sprintf( "%4d-%02d-%02d", $1, $2, $3 );
+    $datestr = sprintf( '%4d-%02d-%02d', $1, $2, $3 );
     }
 
 my $config = LoadFile("$FindBin::Bin/../config.yaml");
@@ -60,7 +60,7 @@ my $user     = $config->{'user'};
 my $password = $config->{'password'};
 
 my $dbh = DBI->connect( "DBI:mysql:database=$db:host=$host", $user, $password )
-    or die "Can't connect to database: $DBI::errstr\n";
+    or die ("Can't connect to database: $DBI::errstr\n");
 
 # Fetch shifts for the given day.
 my $shifts_r = get_shifts_for_day($datestr);
@@ -81,9 +81,9 @@ foreach my $shift ( @{$shifts_r} )
     my $shift_start = $shift->{'ns_shift_start_time'};
     my $shift_end   = $shift->{'ns_shift_end_time'};
 
-    print $shift_id . " "
-        . $datestr . ": "
-        . $shift_start . " - "
+    print $shift_id . ' '
+        . $datestr . ': '
+        . $shift_start . ' - '
         . $shift_end . "\n";
 
     my %log_ranges = ();
@@ -106,15 +106,15 @@ foreach my $shift ( @{$shifts_r} )
                 ( 'aragog', 'chandra', 'hapi', 'minicat', 'scissors', 'rock' ) )
             )
             {
-            @le_locations = ("dh");
+            @le_locations = ('dh');
             }
         elsif ( grep( $log_entry->{'ns_li_machine'}, ( 'kupo', 'paper' ) ) )
             {
-            @le_locations = ("kennel");
+            @le_locations = ('kennel');
             }
         elsif ( grep( $log_entry->{'ns_li_machine'}, ('override') ) )
             {
-            @le_locations = ( "dh", "kennel" );
+            @le_locations = ( 'dh', 'kennel' );
             }
         else
             {
@@ -283,7 +283,7 @@ foreach my $shift ( @{$shifts_r} )
         Date::Calc::Delta_DHMS( 2011, 10, 26, @shift_starta[ 0 .. 2 ],
         2011, 10, 26, @shift_enda[ 0 .. 2 ] );
     $shift_duration{'mm'} += ( $shift_duration{'hh'} * 60 );
-    print "Shift duration: " . $shift_duration{'mm'} . " minutes.\n";
+    print 'Shift duration: ' . $shift_duration{'mm'} . " minutes.\n";
 
     # Collect all assignments for the shift, store assignment ID, desk ID,
     # and cat ID for each assignment.
@@ -292,7 +292,7 @@ foreach my $shift ( @{$shifts_r} )
 # Iterate over the assignments for the current shift. assignment{ns_cat_id,ns_sa_id,ns_desk_id}
     foreach my $assignment_r (@$shift_assignments_r)
         {
-        print "Assignment ID: " . $assignment_r->{'ns_sa_id'} . "\n";
+        print 'Assignment ID: ' . $assignment_r->{'ns_sa_id'} . "\n";
 
         # Translate the desk id from the assignment into a format we can match
         # against the locations stored with the log ranges generated earlier.
@@ -300,12 +300,12 @@ foreach my $shift ( @{$shifts_r} )
         if ( $assignment_r->{'ns_desk_id'} == 2 )
             {
             print "Location: DOGHaus\n";
-            $a_location = "dh";
+            $a_location = 'dh';
             }
         elsif ( $assignment_r->{'ns_desk_id'} == 3 )
             {
             print "Location: Kennel\n";
-            $a_location = "kennel";
+            $a_location = 'kennel';
             }
         else
             {
@@ -318,7 +318,7 @@ foreach my $shift ( @{$shifts_r} )
             if ( $r_cat == $assignment_r->{'ns_cat_id'} )
                 {
                 my %coverage = ();
-                print "Found range for cat ID: " . $r_cat . "\n";
+                print 'Found range for cat ID: ' . $r_cat . "\n";
 
                 # The below bit needs work
 
@@ -329,8 +329,8 @@ foreach my $shift ( @{$shifts_r} )
                         print "Range location matches assignment location.\n";
                         foreach my $r_times ( @{ $log_ranges{$r_cat}{$r_loc} } )
                             {
-                            print "Start: " . $r_times->[0] . "\n";
-                            print "End: " . $r_times->[1] . "\n";
+                            print 'Start: ' . $r_times->[0] . "\n";
+                            print 'End: ' . $r_times->[1] . "\n";
 
                             my @st = $r_times->[0] =~ m/(\d\d):(\d\d):\d\d/;
                             my @et = $r_times->[1] =~ m/(\d\d):(\d\d):\d\d/;
@@ -340,7 +340,7 @@ foreach my $shift ( @{$shifts_r} )
                                 @st[ 0 .. 1 ],
                                 0, 2011, 10, 26, @et[ 0 .. 1 ], 0 );
                             $coverage{'mm'} += ( $coverage{'hh'} * 60 );
-                            print "Logged coverage: "
+                            print 'Logged coverage: '
                                 . $coverage{'mm'}
                                 . " minutes.\n";
                             }
@@ -397,13 +397,13 @@ sub get_shifts_for_day
     # these in the ns_shift_id, ns_shift_start_time, and ns_shift_end_time
     # columns.
     my $sth_gsd = $dbh->prepare( '
-		SELECT ns_shift_id, ns_shift_start_time, ns_shift_end_time
-		FROM ns_shift
-		WHERE ns_shift_date = ?
-		' )
-        or die "Couldn't prepare statement: " . $dbh->errstr;
+                SELECT ns_shift_id, ns_shift_start_time, ns_shift_end_time
+                FROM ns_shift
+                WHERE ns_shift_date = ?
+                ' )
+        or die ('Could not prepare statement: ' . $dbh->errstr);
     $sth_gsd->bind_param( 1, $date );
-    $sth_gsd->execute or die "Couldn't execute statement: " . $sth_gsd->errstr;
+    $sth_gsd->execute or die ('Could not execute statement: ' . $sth_gsd->errstr);
 
     # From CPAN Perl DBI documentation:
 
@@ -439,14 +439,14 @@ sub get_logs_for_day
     my $gle_date = $_[0];
 
     my $sth_gle = $dbh->prepare( '
-		SELECT ns_cat_id, ns_li_ontime, ns_li_offtime, ns_li_machine
-		FROM ns_log_item
-		WHERE ns_li_date = ?
-		' )
-        or die "Couldn't prepare statement: " . $dbh->errstr;
+                SELECT ns_cat_id, ns_li_ontime, ns_li_offtime, ns_li_machine
+                FROM ns_log_item
+                WHERE ns_li_date = ?
+                ' )
+        or die ('Could not prepare statement: ' . $dbh->errstr);
 
     $sth_gle->bind_param( 1, $gle_date );
-    $sth_gle->execute or die "Couldn't execute statement: " . $sth_gle->errstr;
+    $sth_gle->execute or die ('Could not execute statement: ' . $sth_gle->errstr);
 
     my @log_entries;
     while ( my $result_r = $sth_gle->fetchrow_hashref() )
@@ -464,15 +464,15 @@ sub get_assignments_by_shift
     my $gabs_shift_id = $_[0];
 
     my $sth_gabs = $dbh->prepare( '
-		SELECT ns_sa_id, ns_cat_id, ns_desk_id
-		FROM `ns_shift_assigned`
-		WHERE `ns_shift_id` = ?
-		' )
-        or die "Couldn't prepare statement: " . $dbh->errstr;
+                SELECT ns_sa_id, ns_cat_id, ns_desk_id
+                FROM `ns_shift_assigned`
+                WHERE `ns_shift_id` = ?
+                ' )
+        or die ('Could not prepare statement: ' . $dbh->errstr);
 
     $sth_gabs->bind_param( 1, $gabs_shift_id );
     $sth_gabs->execute
-        or die "Couldn't execute statement: " . $sth_gabs->errstr;
+        or die ('Could not execute statement: ' . $sth_gabs->errstr);
 
     my @assignments;
     while ( my $result_r = $sth_gabs->fetchrow_hashref() )

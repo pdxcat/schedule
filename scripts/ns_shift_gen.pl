@@ -19,11 +19,11 @@
 
 use strict;
 use warnings;
-use Date::Calc "Delta_DHMS";
-use Date::Calc "Add_Delta_DHMS";
-use Date::Calc "Delta_Days";
-use Date::Calc "Add_Delta_Days";
-use Date::Calc "Day_of_Week";
+use Date::Calc 'Delta_DHMS';
+use Date::Calc 'Add_Delta_DHMS';
+use Date::Calc 'Delta_Days';
+use Date::Calc 'Add_Delta_Days';
+use Date::Calc 'Day_of_Week';
 use DBI;
 use FindBin;
 use POSIX;
@@ -59,7 +59,7 @@ my $user     = $config->{'user'};
 my $password = $config->{'password'};
 
 my $dbh = DBI->connect( "DBI:mysql:database=$db:host=$host", $user, $password )
-    or die "Can't connect to database: $DBI::errstr\n";
+    or die ("Can't connect to database: $DBI::errstr\n");
 my @start_date
     ; # Date to start at, taken from arguments in YYYY-MM-DD format, then broken up into this array as three pieces YYYY, MM, DD.
 my @end_date;    # Date to end at, as above.
@@ -73,7 +73,7 @@ if ( !defined $ARGV[0] )
     print "No arguments specified! Please use the -d option to specify a start and end date, or the -t option to specify a term by name.\n";
     exit;
     }
-elsif ( $ARGV[0] eq "-t" )
+elsif ( $ARGV[0] eq '-t' )
     {
     # -t option specifies a term from the ns_term table by name.
     # Argument should look like '-t Fall 2010'
@@ -81,10 +81,10 @@ elsif ( $ARGV[0] eq "-t" )
         {
         my $term_name     = "$ARGV[1] $ARGV[2]";
         my $sth_get_terms = $dbh->prepare(
-            "SELECT ns_term_name, ns_term_startdate, ns_term_enddate
-			FROM ns_term
-			WHERE ns_term_name = ?"
-        ) or die "Couldn't prepare statement: " . $dbh->errstr;
+            'SELECT ns_term_name, ns_term_startdate, ns_term_enddate
+                FROM ns_term
+                WHERE ns_term_name = ?'
+	) or die ("Couldn't prepare statement: $dbh->errstr\n");;
         $sth_get_terms->bind_param( 1, $term_name );
         $sth_get_terms->execute;
 
@@ -107,7 +107,7 @@ elsif ( $ARGV[0] eq "-t" )
         exit;
         }
     }
-elsif ( $ARGV[0] eq "-d" )
+elsif ( $ARGV[0] eq '-d' )
     {
     # -d option should take a start and end date in YYYY-MM-DD format.
     # Argument should look like '-d 2010-01-10 2010-02-01'
@@ -146,7 +146,7 @@ sub buildshifts
 
     # hh mm ss
     my @c_time = ( 0, 0, 0 );
-    my $db_date = sprintf( "%4d-%02d-%02d", @c_date[ 0 .. 2 ] );
+    my $db_date = sprintf( '%4d-%02d-%02d', @c_date[ 0 .. 2 ] );
 
 # Test the difference between the current date and the end date, run until they are the same.
     for (
@@ -190,8 +190,10 @@ sub buildshifts
                 }
             }
         ( @c_date[ 0 .. 2 ] ) = Date::Calc::Add_Delta_Days( @c_date, 1 );
-        $db_date = sprintf( "%4d-%02d-%02d", @c_date[ 0 .. 2 ] );
+        $db_date = sprintf( '%4d-%02d-%02d', @c_date[ 0 .. 2 ] );
         }
+
+    return 1;
     }
 
 # Takes a date, time, and number of seats available, generates a shift entry for each available seat.
@@ -207,13 +209,13 @@ sub hourloop
         seats  => $_[6],
     );
     my $hl_db_date =
-        sprintf( "%4d-%02d-%02d", @hl_args{ 'year', 'month', 'day' } );
+        sprintf( '%4d-%02d-%02d', @hl_args{ 'year', 'month', 'day' } );
     my $hl_db_time =
-        sprintf( "%02d:%02d:%02d", @hl_args{ 'hour', 'minute', 'second' } );
-    my $hl_db_end_time = sprintf( "%02d:%02d:%02d",
+        sprintf( '%02d:%02d:%02d', @hl_args{ 'hour', 'minute', 'second' } );
+    my $hl_db_end_time = sprintf( '%02d:%02d:%02d',
         $hl_args{'hour'} + 1,
         @hl_args{ 'minute', 'second' } );
-    if ( checkdate( $hl_db_date, $hl_db_time ) eq "noshift" )
+    if ( checkdate( $hl_db_date, $hl_db_time ) eq 'noshift' )
         {
 # If checkdate() returns 0 it means there are no shifts matching the given date + time and it is okay to proceed with generating the shifts.
         for ( my $c_seat = 1 ; $c_seat <= $hl_args{'seats'} ; $c_seat++ )
@@ -221,7 +223,7 @@ sub hourloop
             addrecord( $hl_db_date, $hl_db_time, $hl_db_end_time );
             }
         }
-    elsif ( checkdate( $hl_db_date, $hl_db_time ) eq "shift" )
+    elsif ( checkdate( $hl_db_date, $hl_db_time ) eq 'shift' )
         {
 # If checkdate() returns 1 it means at least 1 shift matching the given date + time exists and shift generation should be aborted.
         print "A shift or shifts already exist for $hl_db_date at $hl_db_time. Skipping.\n";
@@ -232,6 +234,8 @@ sub hourloop
         print "Something odd has happened in hourloop() or checkdate()!\n";
         exit;
         }
+
+    return 1;
     }
 
 # Add a shift record to the ns_shift table. Takes a date, start time, and end time as arguments.
@@ -242,14 +246,17 @@ sub addrecord
         start_time => $_[1],
         end_time   => $_[2],
     );
+
     my $sth_add_shift = $dbh->prepare(
 'INSERT INTO `ns_shift` (ns_shift_date,ns_shift_start_time,ns_shift_end_time) VALUES (?,?,?)'
-    ) or die "Couldn't prepare statement: " . $dbh->errstr;
+    ) or die ("Couldn't prepare statement: $dbh->errstr\n");;
     $sth_add_shift->bind_param( 1, $ar_args{'date'} );
     $sth_add_shift->bind_param( 2, $ar_args{'start_time'} );
     $sth_add_shift->bind_param( 3, $ar_args{'end_time'} );
     $sth_add_shift->execute;
     print "Added shift with start time $_[1] and end time $_[2] on $_[0].\n";
+
+    return 1;
     }
 
 # Determine if any shifts exist for the given date. Takes a date and time in database formatted form as arguments.
@@ -259,22 +266,22 @@ sub checkdate
     my $cd_db_time     = $_[1];
     my $sth_get_shifts = $dbh->prepare(
 'SELECT COUNT(*) FROM `ns_shift` WHERE ns_shift_date = ? AND ns_shift_start_time = ?'
-    ) or die "Couldn't prepare statement: " . $dbh->errstr;
+    ) or die ("Couldn't prepare statement: $dbh->errstr\n");;
     $sth_get_shifts->bind_param( 1, $cd_db_date );
     $sth_get_shifts->bind_param( 2, $cd_db_time );
     $sth_get_shifts->execute;
     my $cd_count = $sth_get_shifts->fetchrow_array();
     if ( $cd_count == 0 )
         {
-        return "noshift";
+        return 'noshift';
         }
     elsif ( $cd_count >= 1 )
         {
-        return "shift";
+        return 'shift';
         }
     else
         {
-        return "error";
+        return 'error';
         }
     }
 
@@ -283,7 +290,7 @@ sub getholidays
     {
     my $sth_get_holidays = $dbh->prepare(
 'SELECT ns_holiday_name, ns_holiday_date, ns_holiday_excused FROM ns_holiday'
-    ) or die "Couldn't prepare statement: " . $dbh->errstr;
+    ) or die ("Couldn't prepare statement: $dbh->errstr\n");;
     $sth_get_holidays->execute;
     while ( my @ns_holiday_entry = $sth_get_holidays->fetchrow_array() )
         {
@@ -294,4 +301,6 @@ sub getholidays
             }
         }
     print "-----\n";
+
+    return 1;
     }

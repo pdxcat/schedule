@@ -34,17 +34,17 @@ my $user     = $config->{'user'};
 my $password = $config->{'password'};
 
 my $dbh = DBI->connect( "DBI:mysql:database=$db:host=$host", $user, $password )
-    or die "Can't connect to database: $DBI::errstr\n";
+    or die ("Can't connect to database: $DBI::errstr\n");
 
 # Check arguments. Valid ones are:
-# -l					Lists terms currently in the database
-# -n name yyyy yyyy-mm-dd yy-mm-dd 	Create a new entry in the database
-# -d name yyyy				Delete an entry from the database
+# -l                                    Lists terms currently in the database
+# -n name yyyy yyyy-mm-dd yy-mm-dd      Create a new entry in the database
+# -d name yyyy                          Delete an entry from the database
 
 my $invalid_args_message = "Invalid argument. Use one of the following:
--l                            		Lists terms currently in the database
--n name yyyy yyyy-mm-dd yy-mm-dd	Create a new entry in the database
--d name yyyy                  		Delete an entry from the database\n";
+-l                                      Lists terms currently in the database
+-n name yyyy yyyy-mm-dd yy-mm-dd        Create a new entry in the database
+-d name yyyy                            Delete an entry from the database\n";
 
 if ( !defined $ARGV[0] )
     {
@@ -52,13 +52,13 @@ if ( !defined $ARGV[0] )
 
     # Option for listing all term entries
     }
-elsif ( $ARGV[0] eq "-l" )
+elsif ( $ARGV[0] eq '-l' )
     {
     term_list();
 
     # Option to create a new term entry
     }
-elsif ( $ARGV[0] eq "-n" )
+elsif ( $ARGV[0] eq '-n' )
     {
     # Do some checking of the arguments
     if (   @ARGV == 5
@@ -70,9 +70,9 @@ elsif ( $ARGV[0] eq "-n" )
         # If they check out, dump them to a hash and call term_add()
         {
         my %args = (
-            "name"       => sprintf( "%s %4d", @ARGV[ 1, 2 ] ),
-            "start_date" => $ARGV[3],
-            "end_date"   => $ARGV[4],
+            'name'       => sprintf( '%s %4d', @ARGV[ 1, 2 ] ),
+            'start_date' => $ARGV[3],
+            'end_date'   => $ARGV[4],
         );
         term_add( \%args );
 
@@ -85,7 +85,7 @@ elsif ( $ARGV[0] eq "-n" )
 
     # Option to delete a term entry
     }
-elsif ( $ARGV[0] eq "-d" )
+elsif ( $ARGV[0] eq '-d' )
     {
     # Check out arguments, make sure they're sane.
     if (   @ARGV == 3
@@ -94,7 +94,7 @@ elsif ( $ARGV[0] eq "-d" )
 
         # If they look good dump them in a hash and call term_del()
         {
-        my %args = ( "name" => sprintf( "%s %4d", @ARGV[ 1, 2 ] ), );
+        my %args = ( 'name' => sprintf( '%s %4d', @ARGV[ 1, 2 ] ), );
         term_del( \%args );
 
         # If not, die
@@ -122,6 +122,8 @@ sub term_list
         {
         print "$term_ref->{$id}->{'ns_term_name'} starting $term_ref->{$id}->{'ns_term_startdate'} and ending $term_ref->{$id}->{'ns_term_enddate'}.\n";
         }
+
+    return 1;
     }
 
 # Add a term entry to the database
@@ -152,8 +154,8 @@ sub term_add
     # with the specified attributes.
     my $sth_add_term = $dbh->prepare(
         'INSERT INTO ns_term (ns_term_name, ns_term_startdate, ns_term_enddate)
-	VALUES (?, ?, ?)'
-    ) or die "Couldn't prepare statement: $dbh->errstr \n";
+        VALUES (?, ?, ?)'
+    ) or die ("Couldn't prepare statement: $dbh->errstr \n");
     $sth_add_term->bind_param( 1, $args_ref->{'name'} );
     $sth_add_term->bind_param( 2, $args_ref->{'start_date'} );
     $sth_add_term->bind_param( 3, $args_ref->{'end_date'} );
@@ -164,7 +166,7 @@ sub term_add
         {
         print "Unable to execute addition query: $dbh->errstr \n";
         }
-    elsif ( $return eq 1 )
+    elsif ( $return eq '1' )
         {
         print "Added new term entry for $args_ref->{'name'}\n";
         }
@@ -172,6 +174,8 @@ sub term_add
         {
         print "Something odd happened. Addition query returned: $return\n";
         }
+
+    return 1;
     }
 
 # Delete a term entry from the database
@@ -191,7 +195,7 @@ sub term_del
         {
         print "Unable to execute deletion query: $dbh->errstr \n";
         }
-    elsif ( $return eq "0E0" )
+    elsif ( $return eq '0E0' )
         {
         print "No such term to remove!\n";
         }
@@ -203,6 +207,8 @@ sub term_del
         {
         print "Something odd happened. Deletion query returned: $return\n";
         }
+
+    return 1;
     }
 
 sub term_get
@@ -210,7 +216,7 @@ sub term_get
     # Select all terms
     # Return a hash reference containing the terms keyed to their id
     my $sth_get_terms = $dbh->prepare('SELECT * FROM ns_term')
-        or die "Couldn't prepare statement: " . $dbh->errstr;
+        or die ("Couldn't prepare statement: $dbh->errstr\n");
     $sth_get_terms->execute;
     return $sth_get_terms->fetchall_hashref('ns_term_id');
     }

@@ -19,7 +19,7 @@
 
 use strict;
 use warnings;
-use Date::Calc "Delta_DHMS";
+use Date::Calc 'Delta_DHMS';
 use DBI;
 use FindBin;
 use POSIX;
@@ -39,7 +39,7 @@ my $user     = $config->{'user'};
 my $password = $config->{'password'};
 
 my $dbh = DBI->connect( "DBI:mysql:database=$db:host=$host", $user, $password )
-    or die "Can't connect to database: $DBI::errstr\n";
+    or die("Can't connect to database: $DBI::errstr\n");
 
 # Which types of CATs are eligible for desk duty?
 my @dog_types = ( 2, 1 );
@@ -98,7 +98,7 @@ else
     {
     $dogs_hash_ref = get_dogs( \@dog_types );
     $args{dog_id} = get_id_from_value( $args{dog_name}, $dogs_hash_ref );
-    if ( $args{dog_id} eq "no match" )
+    if ( $args{dog_id} eq 'no match' )
         {
         print "No such dog \"$args{dog_name}\" eligible for desk duty found.\n";
         $die_early = 1;
@@ -128,12 +128,12 @@ if (  !$args{'term_name'} && !$args{'date_range'}
     }
 elsif ( $args{'term_name'} && !$args{'date_range'} )
     {
-    # Make sure a valid term has been specified, check against 
+    # Make sure a valid term has been specified, check against
     # output of get_terms().
 
     my $term_id = get_id_from_value( $args{term_name}, $terms_hash_ref );
 
-    if ( $term_id eq "no match" )
+    if ( $term_id eq 'no match' )
         {
         print "No such term \"$args{term_name}\" exists in the database.\n";
         $die_early = 1;
@@ -144,10 +144,10 @@ elsif ( $args{'term_name'} && !$args{'date_range'} )
 
         # Get the details of the term we're working with
         my $sth_get_term_dates = $dbh->prepare( '
-		SELECT ns_term_startdate, ns_term_enddate
-		FROM ns_term
-		WHERE ns_term_id = ?' )
-            or die "Couldn't prepare statement: " . $dbh->errstr;
+                SELECT ns_term_startdate, ns_term_enddate
+                FROM ns_term
+                WHERE ns_term_id = ?' )
+            or die ("Couldn't prepare statement: $dbh->errstr\n");
 
         $sth_get_term_dates->bind_param( 1, $term_id );
         $sth_get_term_dates->execute;
@@ -342,7 +342,7 @@ if ( !$die_early )
 # Make sure a valid desk has been specified, check against output of get_desks()
 my $desks_hash_ref = get_desks();
 $args{desk_id} = get_id_from_value( $args{desk_name}, $desks_hash_ref );
-if ( $args{desk_id} eq "no match" )
+if ( $args{desk_id} eq 'no match' )
     {
     print "No such desk \"$args{desk_name}\" exists in the database.\n";
     $die_early = 1;
@@ -388,7 +388,7 @@ while (
     )
     {
     $current_date{'yyyy-mm-dd'} =
-        sprintf( "%4d-%02d-%02d", @current_date{ 'yyyy', 'mm', 'dd' } );
+        sprintf( '%4d-%02d-%02d', @current_date{ 'yyyy', 'mm', 'dd' } );
 
     # If a day matches the day to be assigned...
     if ( Date::Calc::Day_of_Week( @current_date{ 'yyyy', 'mm', 'dd' } ) ==
@@ -403,7 +403,7 @@ while (
             # Try to grab a shift entry for the specified
             # date and time, if one doesn't exist move on.
             my $shift_id = get_shift_id( $current_date{'yyyy-mm-dd'},
-                $current_hour, sprintf( "%02d", $current_hour + 1 ) );
+                $current_hour, sprintf( '%02d', $current_hour + 1 ) );
             print "Got shift ID: $shift_id\n";
             if ( $shift_id != 0 )
                 {
@@ -427,12 +427,12 @@ while (
                 }
             else
                 {
-                print "No shift for "
-                    . $current_date{'yyyy-mm-dd'} . " at "
-                    . sprintf( "%02d", $current_hour )
+                print 'No shift for '
+                    . $current_date{'yyyy-mm-dd'} . ' at '
+                    . sprintf( '%02d', $current_hour )
                     . " exists.\n";
                 }
-            $current_hour = sprintf( "%02d", $current_hour + 1 );
+            $current_hour = sprintf( '%02d', $current_hour + 1 );
             }
         }
     else
@@ -454,24 +454,24 @@ sub get_shift_id
 
     if ( @_ != 3 )
         {
-        print "get_shift_id() was passed an invalid number of arguments! ("
+        print 'get_shift_id() was passed an invalid number of arguments! ('
             . @_ . ").\n";
         }
     my %gsi_args;
     @gsi_args{ 'date', 'start', 'end' } = @_;
-    $gsi_args{'start'} = sprintf( "%02d:00:00", $gsi_args{'start'} );
-    $gsi_args{'end'}   = sprintf( "%02d:00:00", $gsi_args{'end'} );
+    $gsi_args{'start'} = sprintf( '%02d:00:00', $gsi_args{'start'} );
+    $gsi_args{'end'}   = sprintf( '%02d:00:00', $gsi_args{'end'} );
 
     # Query to match *the* (there should only be one!) shift entry for the
     # given date and start and end times.
     my $sth_gsi = $dbh->prepare( '
-		SELECT ns_shift_id
-		FROM ns_shift
-		WHERE ns_shift_date = ?
-		AND ns_shift_start_time = ?
-		AND ns_shift_end_time = ?
-		' )
-        or die "Couldn't prepare statement: " . $dbh->errstr;
+                SELECT ns_shift_id
+                FROM ns_shift
+                WHERE ns_shift_date = ?
+                AND ns_shift_start_time = ?
+                AND ns_shift_end_time = ?
+                ' )
+	or die ("Couldn't prepare statement: $dbh->errstr\n");
     $sth_gsi->bind_param( 1, $gsi_args{'date'} );
     $sth_gsi->bind_param( 2, $gsi_args{'start'} );
     $sth_gsi->bind_param( 3, $gsi_args{'end'} );
@@ -524,7 +524,7 @@ sub new_assignment
     {
     if ( @_ != 3 )
         {
-        print "new_assignment() was passed an invalid number of arguments! ("
+        print 'new_assignment() was passed an invalid number of arguments! ('
             . @_ . ").\n";
         exit;
         }
@@ -532,18 +532,21 @@ sub new_assignment
     @na_args{ 'dog_id', 'shift_id', 'desk_id' } = @_;
 
     my $sth_add_assignment = $dbh->prepare( '
-		INSERT INTO `ns_shift_assigned` (ns_cat_id,ns_shift_id,ns_desk_id,ns_sa_assignedtime)
-		VALUES (?,?,?,?)
-		' ) or die "Couldn't prepare statement: " . $dbh->errstr;
+        INSERT INTO `ns_shift_assigned` 
+            (ns_cat_id, ns_shift_id, ns_desk_id,ns_sa_assignedtime )
+        VALUES (?,?,?,?)
+        ' ) or die ("Couldn't prepare statement: $dbh->errstr\n");
     $sth_add_assignment->bind_param( 1, $na_args{'dog_id'} );
     $sth_add_assignment->bind_param( 2, $na_args{'shift_id'} );
     $sth_add_assignment->bind_param( 3, $na_args{'desk_id'} );
-    my $current_timestamp = strftime "%Y-%m-%d %H:%M:%S", localtime;
+    my $current_timestamp = strftime ( '%Y-%m-%d %H:%M:%S', localtime);
 
     #print $current_timestamp . "\n";
     $sth_add_assignment->bind_param( 4, $current_timestamp );
     $sth_add_assignment->execute;
     print "Assignment successful for DOG $na_args{'dog_id'}, shift $na_args{'shift_id'}.\n";
+
+    return  1;
     }
 
 # Determine if an "active" shift assignment for a given shift exists for a Cat
@@ -555,7 +558,7 @@ sub check_shift
 
     if ( @_ != 3 )
         {
-        print "check_shift() was passed an invalid number of arguments! (" . @_
+        print 'check_shift() was passed an invalid number of arguments! (' . @_
             . ").\n";
         exit;
         }
@@ -565,16 +568,16 @@ sub check_shift
     # Get entries from ns_shift_assigned which match the criteria for
     # active assignment entries for the given Cat, desk, and shift.
     my $sth_cs = $dbh->prepare( '
-	SELECT sa.ns_sa_id
-	FROM ns_shift_assigned as sa
-	WHERE sa.ns_shift_id = ?
-	AND sa.ns_cat_id = ?
-	AND sa.ns_desk_id = ?
-	AND NOT EXISTS
-		(SELECT *
-		FROM ns_shift_dropped as sd
-		WHERE sd.ns_sa_id = sa.ns_sa_id)' )
-        or die "Couldn't prepare statement: " . $dbh->errstr;
+        SELECT sa.ns_sa_id
+        FROM ns_shift_assigned as sa
+        WHERE sa.ns_shift_id = ?
+        AND sa.ns_cat_id = ?
+        AND sa.ns_desk_id = ?
+        AND NOT EXISTS
+                (SELECT *
+                FROM ns_shift_dropped as sd
+                WHERE sd.ns_sa_id = sa.ns_sa_id)' )
+	or die ("Couldn't prepare statement: $dbh->errstr\n");
     $sth_cs->bind_param( 1, $cs_args{'shift_id'} );
     $sth_cs->bind_param( 2, $cs_args{'dog_id'} );
     $sth_cs->bind_param( 3, $cs_args{'desk_id'} );
@@ -611,7 +614,7 @@ sub check_shift
     elsif ( @assignment_ids == 1 )
         {
         print "Found active assignment for shift ID: $cs_args{'shift_id'}. \n";
-        print "Assignment ID: " . $assignment_ids[0] . "\n";
+        print 'Assignment ID: ' . $assignment_ids[0] . "\n";
         return $assignment_ids[0];
 
     # No active assignments means we are clear to create a new assignment entry.
@@ -621,6 +624,8 @@ sub check_shift
         print "No active assignment found for shift ID: $cs_args{'shift_id'}. \n";
         return 0;
         }
+
+    return 1;
     }
 
 # Iterates through each entry of a hash to see if the given scalar exists as a
@@ -648,7 +653,7 @@ sub get_id_from_value
         }
     else
         {
-        return "no match";
+        return 'no match';
         }
     }
 
@@ -661,9 +666,9 @@ sub get_id_from_value
 sub get_desks
     {
     my $sth_get_desks = $dbh->prepare( '
-	SELECT ns_desk_id, ns_desk_shortname
-	FROM ns_desk' )
-        or die "Couldn't prepare statement: " . $dbh->errstr;
+        SELECT ns_desk_id, ns_desk_shortname
+        FROM ns_desk' )
+	or die ("Couldn't prepare statement: $dbh->errstr\n");
     $sth_get_desks->execute;
     my %return_hash;
     while ( my @ns_desk_entry = $sth_get_desks->fetchrow_array() )
@@ -697,13 +702,13 @@ sub get_dogs
                 }
             else
                 {
-                $types_db_list .= "," . $types_ref->[$i];
+                $types_db_list .= ',' . $types_ref->[$i];
                 }
             }
         my $get_dogs_query =
 "SELECT ns_cat_id, ns_cat_uname FROM ns_cat WHERE ns_cat_type_id IN ($types_db_list)";
         my $sth_get_dogs = $dbh->prepare($get_dogs_query)
-            or die "Couldn't prepare statement: " . $dbh->errstr;
+            or die ("Couldn't prepare statement: $dbh->errstr\n");
         $sth_get_dogs->execute;
         my %return_hash;
         while ( my @ns_cat_entry = $sth_get_dogs->fetchrow_array() )
@@ -717,9 +722,9 @@ sub get_dogs
     else
         {
         my $sth_get_dogs = $dbh->prepare( '
-		SELECT ns_cat_id, ns_cat_uname
-		FROM ns_cat' )
-            or die "Couldn't prepare statement: " . $dbh->errstr;
+                SELECT ns_cat_id, ns_cat_uname
+                FROM ns_cat' )
+            or die ("Couldn't prepare statement: $dbh->errstr\n");
         $sth_get_dogs->execute;
         my %return_hash;
         while ( my @ns_cat_entry = $sth_get_dogs->fetchrow_array() )
@@ -739,9 +744,10 @@ sub get_dogs
 sub get_terms
     {
     my $sth_get_terms = $dbh->prepare( '
-	SELECT ns_term_id, ns_term_name
-	FROM ns_term' )
-        or die "Couldn't prepare statement: " . $dbh->errstr;
+        SELECT ns_term_id, ns_term_name
+        FROM ns_term' )
+
+	or die ("Couldn't prepare statement: $dbh->errstr\n");
     $sth_get_terms->execute;
     my %return_hash;
     while ( my @ns_term_entry = $sth_get_terms->fetchrow_array() )
